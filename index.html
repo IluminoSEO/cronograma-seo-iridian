@@ -115,7 +115,7 @@
                 </div>
                 <div class="mt-2">
                     <span class="text-2xl font-bold text-white" id="stat-total-tasks">0</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">Demandas ativas no SOW</span>
+                    <span class="text-xs text-slate-400 block mt-0.5">Demandas ativas no filtro</span>
                 </div>
             </div>
 
@@ -126,7 +126,7 @@
                 </div>
                 <div class="mt-2">
                     <span class="text-2xl font-bold text-emerald-400" id="stat-total-pages">0</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">URLs e recursos com prazo</span>
+                    <span class="text-xs text-slate-400 block mt-0.5">URLs e recursos listados</span>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@
                 </div>
                 <div class="mt-2">
                     <span class="text-2xl font-bold text-amber-400" id="stat-cwv-tasks">0</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">LCP, INP e CLS</span>
+                    <span class="text-xs text-slate-400 block mt-0.5">LCP, INP e CLS listados</span>
                 </div>
             </div>
 
@@ -148,8 +148,8 @@
                 </div>
                 <div class="mt-2 flex items-center justify-between">
                     <div>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">UJ: 15</span>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 ml-1">UVA: 14</span>
+                        <span id="stat-uj-tasks" class="text-xs font-semibold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">UJ: 0</span>
+                        <span id="stat-uva-tasks" class="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 ml-1">UVA: 0</span>
                     </div>
                 </div>
             </div>
@@ -508,7 +508,6 @@
             populateModalStatusOptions();
         }
 
-        // Função segura para converter texto em JSON
         function tryParseJSON(jsonString, fallback) {
             try { return JSON.parse(jsonString); } 
             catch (e) { return fallback; }
@@ -555,7 +554,6 @@
             };
 
             try {
-                // Tenta atualizar a linha (PUT)
                 const updateUrl = `${sheetdbUrl}/id/${task.id}`;
                 const response = await fetch(updateUrl, {
                     method: 'PUT',
@@ -565,7 +563,6 @@
                 
                 const result = await response.json();
                 
-                // Se o registro não existir (updated === 0), cria a linha (POST)
                 if (result.updated === 0 || result.error) {
                      await fetch(sheetdbUrl, {
                         method: 'POST',
@@ -695,6 +692,7 @@
                 const actWidth = Math.max(1.2, getPositionPct(actEnd) - actLeft);
                 const executionColor = isUJ ? 'bg-gradient-to-r from-sky-500 to-cyan-400' : 'bg-gradient-to-r from-purple-500 to-indigo-400';
                 const notesCount = task.notes ? task.notes.length : 0;
+                
                 return `
                     <div class="grid grid-cols-12 hover:bg-slate-800/40 transition items-center py-2.5">
                         <div class="col-span-4 px-3 border-r border-slate-800/80 space-y-1">
@@ -710,8 +708,12 @@
                             </div>
                         </div>
                         <div class="col-span-8 relative h-10 flex flex-col justify-center gap-1 px-2 gantt-grid cursor-pointer" onclick="openNotesModal('${task.id}')">
-                            <div class="absolute top-1 h-3 rounded bg-slate-800 border border-slate-500/70 flex items-center px-1 text-[9px] text-slate-300 z-10" style="left: ${planLeft}%; width: ${planWidth}%;"></div>
-                            <div class="absolute bottom-1 h-3.5 rounded-md ${executionColor} flex items-center px-1.5 text-[9px] text-white font-bold z-20 hover:brightness-125" style="left: ${actLeft}%; width: ${actWidth}%;"></div>
+                            <div class="absolute top-1 h-3 rounded bg-slate-800 border border-slate-500/70 flex items-center px-1 text-[9px] text-slate-300 z-10 overflow-hidden whitespace-nowrap" style="left: ${planLeft}%; width: ${planWidth}%;">
+                                <span class="truncate">Iridian: ${formatDate(task.plannedStartDate)}</span>
+                            </div>
+                            <div class="absolute bottom-1 h-3.5 rounded-md ${executionColor} flex items-center px-1.5 text-[9px] text-white font-bold z-20 hover:brightness-125 overflow-hidden whitespace-nowrap" style="left: ${actLeft}%; width: ${actWidth}%;">
+                                <span class="truncate">Aplicação: ${formatDate(actStart)} - ${formatDate(actEnd)}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -722,7 +724,7 @@
             const container = document.getElementById('table-rows-container');
             const filtered = getFilteredTasks();
             document.getElementById('table-row-count').innerText = `Exibindo ${filtered.length} tarefas`;
-            if (filtered.length === 0) return container.innerHTML = `<tr><td colspan="8">Vazio</td></tr>`;
+            if (filtered.length === 0) return container.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500">Vazio</td></tr>`;
             
             container.innerHTML = filtered.map(task => {
                 const isUJ = task.instCode === 'UJ';
@@ -767,12 +769,24 @@
             });
         }
 
-        function applyFilters() { renderGantt(); renderTable(); }
+        function applyFilters() { 
+            renderGantt(); 
+            renderTable(); 
+            updateMetrics(); 
+        }
 
         function updateMetrics() {
-            document.getElementById('stat-total-tasks').innerText = tasksState.length;
-            document.getElementById('stat-total-pages').innerText = tasksState.reduce((acc, t) => acc + (t.pagesAffected || 0), 0).toLocaleString('pt-BR');
-            document.getElementById('stat-cwv-tasks').innerText = tasksState.filter(t => t.isCWV).length;
+            const filtered = getFilteredTasks();
+            
+            document.getElementById('stat-total-tasks').innerText = filtered.length;
+            document.getElementById('stat-total-pages').innerText = filtered.reduce((acc, t) => acc + (t.pagesAffected || 0), 0).toLocaleString('pt-BR');
+            document.getElementById('stat-cwv-tasks').innerText = filtered.filter(t => t.isCWV).length;
+            
+            const ujCount = filtered.filter(t => t.instCode === 'UJ').length;
+            const uvaCount = filtered.filter(t => t.instCode === 'UVA').length;
+            
+            document.getElementById('stat-uj-tasks').innerText = `UJ: ${ujCount}`;
+            document.getElementById('stat-uva-tasks').innerText = `UVA: ${uvaCount}`;
         }
 
         function formatDate(dStr) {
