@@ -1,1580 +1,620 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cronograma SEO Técnico — UVA & Unijorge</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Font Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cronograma SEO Técnico — UVA & Unijorge</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
     
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        uj: {
-                            light: '#0ea5e9',
-                            DEFAULT: '#0284c7',
-                            dark: '#0369a1',
-                            badge: '#0284c715',
-                            border: '#38bdf840'
-                        },
-                        uva: {
-                            light: '#a855f7',
-                            DEFAULT: '#9333ea',
-                            dark: '#7e22ce',
-                            badge: '#9333ea15',
-                            border: '#c084fc40'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-        /* Custom scrollbar for Gantt grid */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        .gantt-grid {
-            background-size: 40px 100%;
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-        }
-    </style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { height: 8px; width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-    <!-- App Header -->
-    <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex items-center space-x-3">
-                    <div class="p-2.5 bg-gradient-to-tr from-cyan-600 to-indigo-600 rounded-xl text-white shadow-lg shadow-cyan-500/20">
-                        <i class="fa-solid font-bold fa-chart-gantt text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-xl font-bold tracking-tight text-white">Cronograma SEO Técnico</h1>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Iridian · 2026</span>
-                        </div>
-                        <p class="text-xs text-slate-400 mt-0.5">Gestão Integrada de Tarefas: Unijorge (UJ) & Universidade Veiga de Almeida (UVA)</p>
-                    </div>
-                </div>
-
-                <!-- Navigation Tabs -->
-                <div class="flex items-center space-x-2 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 self-start md:self-auto">
-                    <button id="btn-tab-gantt" onclick="switchTab('gantt')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 bg-cyan-600 text-white shadow">
-                        <i class="fa-solid fa-timeline mr-1.5"></i>Gráfico de Gantt
-                    </button>
-                    <button id="btn-tab-table" onclick="switchTab('table')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all duration-150">
-                        <i class="fa-solid fa-list-check mr-1.5"></i>Tabela & Detalhes
-                    </button>
-                    <button id="btn-tab-doc" onclick="switchTab('doc')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all duration-150">
-                        <i class="fa-solid fa-file-contract mr-1.5"></i>Resumo do Documento
-                    </button>
-                </div>
-            </div>
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-1">
+            <span>IRIDIAN CONSULTING</span>
+            <span>•</span>
+            <span>Soporte SEO Técnico Mensual</span>
+          </div>
+          <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+            Cronograma SEO Técnico — UVA & Unijorge
+          </h1>
         </div>
-    </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <!-- INDICADORES E STATUS DO BANCO -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs">
+            <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+            <span><strong id="totalTarefas" class="text-white">29</strong> Tarefas com Prazo</span>
+          </div>
 
-        <!-- Executive Metrics Bar -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 transition">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-slate-400">Total de Tarefas Com Prazo</span>
-                    <span class="p-2 rounded-lg bg-blue-500/10 text-blue-400"><i class="fa-solid fa-list-ol"></i></span>
-                </div>
-                <div class="mt-2">
-                    <span class="text-2xl font-bold text-white" id="stat-total-tasks">29</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">Demandas ativas no SOW</span>
-                </div>
-            </div>
+          <div class="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs">
+            <i data-lucide="file-text" class="w-4 h-4 text-emerald-400"></i>
+            <span><strong id="totalPaginas" class="text-white">15.939</strong> Páginas/Ativos</span>
+          </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 transition">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-slate-400">Páginas / Ativos Afetados</span>
-                    <span class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><i class="fa-regular fa-file-lines"></i></span>
-                </div>
-                <div class="mt-2">
-                    <span class="text-2xl font-bold text-emerald-400" id="stat-total-pages">9.973</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">URLs e recursos com prazo</span>
-                </div>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 transition">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-slate-400">Prioridade CWV</span>
-                    <span class="p-2 rounded-lg bg-amber-500/10 text-amber-400"><i class="fa-solid fa-bolt"></i></span>
-                </div>
-                <div class="mt-2">
-                    <span class="text-2xl font-bold text-amber-400" id="stat-cwv-tasks">6</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">LCP, INP e CLS</span>
-                </div>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 transition">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-slate-400">Instituições</span>
-                    <span class="p-2 rounded-lg bg-purple-500/10 text-purple-400"><i class="fa-solid fa-graduation-cap"></i></span>
-                </div>
-                <div class="mt-2 flex items-center justify-between">
-                    <div>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">UJ: 15</span>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 ml-1">UVA: 14</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Controls & Filter Toolbar -->
-        <section class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                
-                <!-- Search Input -->
-                <div class="relative flex-1">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                    <input type="text" id="search-input" oninput="applyFilters()" placeholder="Buscar por tarefa, código (ex: UJ-02), tag ou descrição..." 
-                        class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
-                </div>
-
-                <!-- Select Filters -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <!-- Institution Filter -->
-                    <select id="filter-institution" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
-                        <option value="ALL">Todas Instituições</option>
-                        <option value="Unijorge">Unijorge (UJ)</option>
-                        <option value="UVA">UVA (Veiga de Almeida)</option>
-                    </select>
-
-                    <!-- Type Filter -->
-                    <select id="filter-type" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
-                        <option value="ALL">Todos os Tipos</option>
-                        <option value="CWV">Core Web Vitals (CWV)</option>
-                        <option value="STANDARD">SEO Técnico Padrão</option>
-                    </select>
-
-                    <!-- Status Filter -->
-                    <select id="filter-status" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
-                        <option value="ALL">Todos os Status</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Em Progresso">Em Progresso</option>
-                        <option value="Em Revisão">Em Revisão</option>
-                        <option value="Concluído">Concluído</option>
-                        <option value="Impedido">Impedido</option>
-                    </select>
-
-                    <!-- Status Filter -->
-                    <select id="filter-status" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
-                        <option value="ALL">Todos os Status</option>
-                        <option value="Pendente">Pendente</option>
-                        <option value="Em Progresso">Em Progresso</option>
-                        <option value="Em Revisão">Em Revisão</option>
-                        <option value="Concluído">Concluído</option>
-                        <option value="Impedido">Impedido</option>
-                        <option value="Fora do Escopo">Fora do Escopo</option>
-                    </select>
-
-                    <!-- Custom Status Button -->
-                    <button onclick="openCustomStatusModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-tags text-cyan-400"></i>
-                        <span>Gerenciar Status</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 1: GANTT CHART VIEW -->
-        <section id="tab-gantt-content" class="bg-slate-900 border border-slate-800 rounded-xl p-4 overflow-hidden flex flex-col shadow-xl">
-            <!-- Timeline Legend & Controls -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-3 text-xs">
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="font-semibold text-slate-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-palette text-slate-400"></i> Réguas de Prazo:
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800 border border-slate-600 text-slate-300" title="Prazo original definido no cronograma Iridian">
-                        <span class="w-3 h-1.5 rounded-sm bg-slate-400 border border-slate-300"></span> Prazo Iridian (Planejado)
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50 text-cyan-400" title="Prazo real de execução ajustável por você">
-                        <span class="w-3 h-2 rounded bg-gradient-to-r from-sky-500 to-emerald-400"></span> Sua Aplicação (Execução)
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                        <i class="fa-solid fa-bolt text-[10px]"></i> Core Web Vitals
-                    </span>
-                </div>
-
-                <div class="text-slate-400 text-xs">
-                    Período Total: <strong class="text-slate-200">27/07/2026 a 24/12/2026</strong> (Semanas 1 a 22)
-                </div>
-            </div>
-
-            <!-- Gantt Grid Canvas / Table View Layout -->
-            <div class="overflow-x-auto mt-4 rounded-lg border border-slate-800">
-                <div class="min-w-[1050px]">
-                    <!-- Gantt Timeline Header -->
-                    <div class="grid grid-cols-12 bg-slate-950 text-slate-400 text-xs font-semibold border-b border-slate-800">
-                        <div class="col-span-4 p-3 border-r border-slate-800 flex items-center justify-between">
-                            <span>Tarefa & Rótulos</span>
-                            <span class="text-[10px] uppercase tracking-wider text-slate-500">Páginas / Ações</span>
-                        </div>
-                        <div class="col-span-8 grid grid-cols-6 text-center divide-x divide-slate-800/80">
-                            <div class="py-2.5 px-1 bg-slate-900/50">
-                                <span class="block text-slate-300 font-bold">JUL</span>
-                                <span class="text-[10px] text-slate-500">Sem 1</span>
-                            </div>
-                            <div class="py-2.5 px-1">
-                                <span class="block text-slate-300 font-bold">AGO</span>
-                                <span class="text-[10px] text-slate-500">Sem 1-5</span>
-                            </div>
-                            <div class="py-2.5 px-1 bg-slate-900/50">
-                                <span class="block text-slate-300 font-bold">SET</span>
-                                <span class="text-[10px] text-slate-500">Sem 6-10</span>
-                            </div>
-                            <div class="py-2.5 px-1">
-                                <span class="block text-slate-300 font-bold">OUT</span>
-                                <span class="text-[10px] text-slate-500">Sem 10-14</span>
-                            </div>
-                            <div class="py-2.5 px-1 bg-slate-900/50">
-                                <span class="block text-slate-300 font-bold">NOV</span>
-                                <span class="text-[10px] text-slate-500">Sem 15-18</span>
-                            </div>
-                            <div class="py-2.5 px-1">
-                                <span class="block text-slate-300 font-bold">DEZ</span>
-                                <span class="text-[10px] text-slate-500">Sem 19-22</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gantt Rows Container -->
-                    <div id="gantt-rows-container" class="divide-y divide-slate-800/60 text-xs">
-                        <!-- Dynamic Gantt Rows injected by JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 2: DETAILED TABLE VIEW -->
-        <section id="tab-table-content" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-table-list text-cyan-400"></i> Tabela Detalhada de Tarefas & Edição de Prazos
-                </h2>
-                <span id="table-row-count" class="text-xs text-slate-400">Exibindo 29 tarefas</span>
-            </div>
-
-            <div class="overflow-x-auto rounded-lg border border-slate-800">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[11px] border-b border-slate-800">
-                        <tr>
-                            <th class="p-3">Inst.</th>
-                            <th class="p-3">Código</th>
-                            <th class="p-3">Tarefa / Descrição</th>
-                            <th class="p-3">Páginas</th>
-                            <th class="p-3">Prazo Iridian (Planejado)</th>
-                            <th class="p-3">Sua Aplicação (Execução)</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3 text-center">Editar / Anotar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-rows-container" class="divide-y divide-slate-800/60 bg-slate-900/40">
-                        <!-- Dynamic Table Rows injected by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- TAB 3: DOCUMENT SUMMARY & TRANSLATION -->
-        <section id="tab-doc-content" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6 shadow-xl text-slate-300">
-            <div class="border-b border-slate-800 pb-4">
-                <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold rounded-lg">Tradução Oficial</span>
-                    <span class="text-xs text-slate-400">Documento de Origem: <em>Cronograma SEO Técnico — UVA & Unijorge · Iridian.pdf</em></span>
-                </div>
-                <h2 class="text-xl font-bold text-white mt-2">Cronograma de SEO Técnico — UVA & Unijorge (Listas de Agosto 2026)</h2>
-                <p class="text-xs text-slate-400 mt-1">Atualizado em 18/08/2026 | Suporte Mensal de SEO Técnico — IRIDIAN CONSULTING S.A.S.</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- Directives & Guidelines -->
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Diretrizes e Regras de Priorização
-                    </h3>
-                    <ul class="text-xs space-y-2 text-slate-300 list-disc list-inside">
-                        <li><strong>Priorização Máxima:</strong> As tarefas de <strong>Core Web Vitals (LCP, INP, CLS)</strong> vêm em primeiro lugar devido ao seu impacto direto nas métricas do Google.</li>
-                        <li><strong>Segunda Fase:</strong> Em seguida, são executadas as incidências técnicas organizadas por etiqueta.</li>
-                        <li><strong>Alcance (Scope):</strong> SEO Técnico conforme especificado no SOW (Statement of Work).</li>
-                        <li><strong>Acesso aos Ambientes:</strong> Disponível a partir de <strong>21/08/2026</strong>; as novas tarefas iniciam nessa data (as 2 primeiras tarefas da Unijorge mantiveram suas datas já comprometidas).</li>
-                    </ul>
-                </div>
-
-                <!-- Calendar Holidays -->
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-xmark text-rose-400"></i> Feriados Descontados (Colômbia)
-                    </h3>
-                    <p class="text-xs text-slate-400">Os seguintes dias feriados não-laboráveis já foram previamente descontados no cálculo dos dias úteis:</p>
-                    <div class="flex flex-wrap gap-1.5 pt-1">
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">07/08/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">17/08/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">12/10/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">02/11/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">16/11/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">08/12/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">25/12/2026</span>
-                        <span class="px-2 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] rounded">01/01/2027</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Out of scope notice -->
-            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-xs space-y-1">
-                <h4 class="font-bold text-slate-300 flex items-center gap-1.5">
-                    <i class="fa-solid fa-filter text-cyan-400"></i> Observação sobre Demandas Sem Prazo
-                </h4>
-                <p class="text-slate-400">
-                    As tarefas <strong>UJ-01, UJ-05, UJ-09, UVA-06, UVA-10 e UVA-13</strong> (relativas a ALT tags e H1s duplicados/ausentes) foram <strong>removidas da listagem visual</strong> a seu pedido, pois não possuem datas definidas no cronograma original por estarem fora do escopo SOW atual.
-                </p>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODAL: Task Details, Dates & Notes -->
-    <div id="modal-notes" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
-            <!-- Modal Header -->
-            <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span id="modal-inst-badge" class="px-2 py-0.5 rounded text-xs font-bold">UJ</span>
-                    <h3 id="modal-task-code-title" class="text-sm font-bold text-white truncate max-w-[360px]">Título da Tarefa</h3>
-                </div>
-                <button onclick="closeNotesModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-
-            <!-- Modal Content Body -->
-            <div class="p-4 overflow-y-auto space-y-4 text-xs flex-1">
-                
-                <!-- Editable Description Field -->
-                <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <label class="font-bold text-slate-200 flex items-center gap-1.5">
-                            <i class="fa-solid fa-pen-to-square text-cyan-400"></i> Descrição da Demanda:
-                        </label>
-                        <span id="modal-task-pages" class="text-emerald-400 font-semibold text-[11px]"></span>
-                    </div>
-                    <textarea id="modal-task-desc-input" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500" placeholder="Descrição ou instruções da tarefa..."></textarea>
-                </div>
-
-                <!-- Status & Custom Status Selection -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-1.5">
-                        <label class="block text-slate-300 font-semibold flex items-center gap-1.5">
-                            <i class="fa-solid fa-flag text-amber-400"></i> Status da Demanda:
-                        </label>
-                        <select id="modal-status-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
-                            <!-- Options filled by JS -->
-                        </select>
-                    </div>
-
-                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 space-y-1">
-                        <span class="block text-slate-400 font-semibold">Sprint / Período Iridian:</span>
-                        <div id="modal-task-sprint-info" class="text-slate-200 font-medium pt-1">Sprint 1 (Sem 1)</div>
-                    </div>
-                </div>
-
-                <!-- Dual Date Control Section: Iridian Baseline vs User Execution -->
-                <div class="bg-slate-950/80 p-3.5 rounded-xl border border-cyan-500/30 space-y-3">
-                    <h4 class="font-bold text-cyan-300 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-sliders text-cyan-400"></i> Manipulação do Prazo de Execução (Sua Aplicação)
-                        </span>
-                    </h4>
-
-                    <!-- Iridian Baseline Display -->
-                    <div class="p-2 bg-slate-900/80 rounded-lg border border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-                        <span><strong>Prazo Iridian (Régua Base):</strong></span>
-                        <span id="modal-iridian-dates" class="text-slate-200 font-mono font-semibold">27/07/2026 a 28/07/2026</span>
-                    </div>
-
-                    <!-- User Adjustable Execution Dates -->
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Início da Aplicação:</label>
-                            <input type="date" id="modal-actual-start" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Fim da Aplicação:</label>
-                            <input type="date" id="modal-actual-end" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Observations / Notes Section -->
-                <div class="space-y-2">
-                    <h4 class="font-bold text-slate-300 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fa-regular fa-comments text-cyan-400"></i> Campo de Observações & Anotações
-                        </span>
-                        <span id="modal-notes-count" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">0</span>
-                    </h4>
-
-                    <!-- Notes List -->
-                    <div id="modal-notes-list" class="space-y-2 max-h-36 overflow-y-auto pr-1">
-                        <!-- Notes populated here -->
-                    </div>
-
-                    <!-- Add Note Input -->
-                    <div class="space-y-1.5 pt-1">
-                        <textarea id="modal-note-input" rows="2" placeholder="Digite uma nova observação ou anotação interna para esta tarefa..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"></textarea>
-                        <button onclick="saveNoteOnlyFromModal()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-medium rounded-lg text-xs transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-plus text-xs"></i> Inserir Anotação
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Modal Footer Buttons -->
-            <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-2">
-                <button onclick="closeNotesModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium text-xs transition">
-                    Cancelar
-                </button>
-                <button onclick="saveAllTaskDetailsFromModal()" class="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg text-xs transition shadow-lg shadow-cyan-600/20 flex items-center gap-1.5">
-                    <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
-                </button>
-            </div>
+          <div id="dbStatusBadge" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-medium">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="dbStatusText">Conectando ao Supabase...</span>
+          </div>
         </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTROLES E FILTROS -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+      
+      <!-- Busca e Filtros -->
+      <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div class="relative flex-grow sm:flex-grow-0 sm:w-64">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="searchInput" placeholder="Buscar tarefa, código ou tag..." 
+                 class="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <!-- Filtro por Instituição -->
+        <select id="filterInst" class="bg-slate-950 border border-slate-800 text-sm text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+          <option value="ALL">Todas as Instituições</option>
+          <option value="UJ">UJ - Unijorge</option>
+          <option value="UVA">UVA - Veiga de Almeida</option>
+        </select>
+
+        <!-- Filtro por Status -->
+        <select id="filterStatus" class="bg-slate-950 border border-slate-800 text-sm text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+          <option value="ALL">Todos os Status</option>
+          <option value="nao_iniciado">Pendente / Não Iniciado</option>
+          <option value="em_andamento">Em Andamento</option>
+          <option value="em_revisao">Em Revisão</option>
+          <option value="concluido">Concluído</option>
+          <option value="bloqueado">Bloqueado</option>
+        </select>
+      </div>
+
+      <!-- Legenda das Linhas de Prazo -->
+      <div class="flex items-center gap-4 text-xs text-slate-400 bg-slate-950/60 px-3 py-2 rounded-lg border border-slate-800">
+        <span class="font-medium text-slate-300">Legendas de Prazo:</span>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded bg-indigo-500 inline-block"></span>
+          <span>Régua Iridian (SOW)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded bg-amber-500 inline-block"></span>
+          <span>Execução Interna (Manipulável)</span>
+        </div>
+      </div>
     </div>
 
-    <!-- MODAL: Custom Status Management -->
-    <div id="modal-custom-status" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
-            <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-tags text-cyan-400"></i> Gerenciador de Status Personalizados
-                </h3>
-                <button onclick="closeCustomStatusModal()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <!-- SEÇÃO GRÁFICO DE GANTT -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-md">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="font-semibold text-lg text-white flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-400"></i>
+          Gráfico de Gantt Interativo (Julho - Dezembro 2026)
+        </h2>
+        <span class="text-xs text-slate-400">Arraste para o lado se necessário <i data-lucide="arrow-right" class="w-3 h-3 inline"></i></span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <div class="min-w-[1100px] p-4">
+          
+          <!-- Gantt Header (Timeline Months) -->
+          <div class="grid grid-cols-12 gap-0 border-b border-slate-800 pb-2 mb-4 text-xs font-semibold text-slate-400 text-center">
+            <div class="col-span-4 text-left pl-2">Tarefa / Marcadores</div>
+            <div class="col-span-8 grid grid-cols-6 text-center">
+              <div>JUL 2026</div>
+              <div>AGO 2026</div>
+              <div>SET 2026</div>
+              <div>OUT 2026</div>
+              <div>NOV 2026</div>
+              <div>DEZ 2026</div>
             </div>
+          </div>
 
-            <div class="p-4 space-y-4 text-xs">
-                <p class="text-slate-400">Crie novos rótulos de status para organizar o progresso do cronograma:</p>
+          <!-- Gantt Task Rows Container -->
+          <div id="ganttContainer" class="space-y-4">
+            <!-- Renderizado via JavaScript -->
+          </div>
 
-                <!-- Current Status List -->
-                <div class="space-y-2">
-                    <h4 class="font-bold text-slate-300">Status Atuais:</h4>
-                    <div id="custom-status-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                        <!-- List filled by JS -->
-                    </div>
-                </div>
-
-                <!-- Add New Status Form -->
-                <div class="pt-3 border-t border-slate-800 space-y-3">
-                    <h4 class="font-bold text-slate-300">Novo Status:</h4>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-status-label" placeholder="Nome do status (ex: Aguardando Cliente)" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
-                        <input type="color" id="new-status-color" value="#06b6d4" class="h-9 w-10 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer">
-                    </div>
-                    <button onclick="addNewCustomStatus()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs transition">
-                        <i class="fa-solid fa-check mr-1"></i> Adicionar Status
-                    </button>
-                </div>
-            </div>
         </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO TABELA DETALHADA E EDIÇÃO -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-md">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="font-semibold text-lg text-white flex items-center gap-2">
+          <i data-lucide="table" class="w-5 h-5 text-emerald-400"></i>
+          Gestão Detalhada de Prazos e Status
+        </h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-xs text-slate-400 uppercase border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Inst.</th>
+              <th class="py-3 px-4">Código / Tarefa</th>
+              <th class="py-3 px-4">Páginas/Ativos</th>
+              <th class="py-3 px-4">Prazo Iridian</th>
+              <th class="py-3 px-4">Prazo Execução (Sua Data)</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaContainer" class="divide-y divide-slate-800">
+            <!-- Renderizado via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE EDIÇÃO DA TAREFA -->
+  <div id="editModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative">
+      <button onclick="fecharModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <div class="flex items-center gap-3">
+        <span id="modalInstBadge" class="px-2.5 py-1 rounded text-xs font-bold"></span>
+        <h3 id="modalTitle" class="text-xl font-bold text-white"></h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Status -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Status Personalizado</label>
+          <select id="modalStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:border-indigo-500">
+            <option value="nao_iniciado">Pendente / Não Iniciado</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="em_revisao">Em Revisão</option>
+            <option value="concluido">Concluído</option>
+            <option value="bloqueado">Bloqueado</option>
+          </select>
+        </div>
+
+        <!-- Páginas Afetadas -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Impacto (Páginas/Ativos)</label>
+          <input type="text" id="modalPaginas" disabled class="w-full bg-slate-950/50 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-400">
+        </div>
+
+        <!-- Prazo Interno - Inicio -->
+        <div>
+          <label class="block text-xs font-medium text-amber-400 mb-1">Data Início (Execução Interna)</label>
+          <input type="date" id="modalDataInicioReal" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:border-amber-500">
+        </div>
+
+        <!-- Prazo Interno - Fim -->
+        <div>
+          <label class="block text-xs font-medium text-amber-400 mb-1">Data Entrega (Execução Interna)</label>
+          <input type="date" id="modalDataFimReal" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:border-amber-500">
+        </div>
+      </div>
+
+      <!-- Descrição da Tarefa -->
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1">Descrição Técnica da Tarefa</label>
+        <textarea id="modalDescricao" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-200 focus:border-indigo-500"></textarea>
+      </div>
+
+      <!-- Anotações & Observações -->
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1">Anotações & Observações da Equipe</label>
+        <textarea id="modalAnotacoes" rows="3" placeholder="Digite aqui notas de progresso, observações técnicas ou pendências..." 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-200 focus:border-indigo-500"></textarea>
+      </div>
+
+      <!-- Botões do Modal -->
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="fecharModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition">Cancelar</button>
+        <button onclick="salvarModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          Salvar no Supabase
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+  <!-- JAVASCRIPT & SUPABASE INTEGRATION -->
+  <script>
+    // --- 1. CONFIGURAÇÃO DO SUPABASE ---
+    const SUPABASE_URL = "https://tfwqanlfvywzhuvnshvx.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmd3Fhbmxmdnl3emh1dm5zaHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNjY5MzMsImV4cCI6MjEwMzg0MjkzM30.LTOgxd8JZWI90rGmXtFenqm7rmvd8OVdy4WFIGsBDGQ";
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <script>
-        // Tasks dataset with scheduled tasks only (29 tasks with dates)
-        const rawTasks = [
-            // Page 1 - UJ Tasks
-            {
-                id: "UJ-ROBOTS",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "Robots.txt",
-                title: "Configurar robots.txt",
-                description: "Criar e publicar robots.txt com directivas de rastreamento/indexação corretas.",
-                sprint: "Sprint 1",
-                weeks: "Sem 1",
-                plannedStartDate: "2026-07-27",
-                plannedEndDate: "2026-07-28",
-                actualStartDate: "2026-07-27",
-                actualEndDate: "2026-07-28",
-                workDays: 2,
-                pagesAffected: 1,
-                pagesText: "1 arquivo (Geral)",
-                isCWV: false,
-                status: "Concluído",
-                notes: ["Directivas verificadas no Search Console."]
-            },
-            {
-                id: "UJ-PERF-13",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "Rendimento",
-                title: "Reduzir tempo de carga de 13 páginas",
-                description: "Otimizar tempo de carga em 13 páginas priorizadas (entrega comprometida).",
-                sprint: "Sprint 1-2",
-                weeks: "Sem 1-4",
-                plannedStartDate: "2026-07-29",
-                plannedEndDate: "2026-08-18",
-                actualStartDate: "2026-07-29",
-                actualEndDate: "2026-08-18",
-                workDays: 13,
-                pagesAffected: 13,
-                pagesText: "13 páginas",
-                isCWV: false,
-                status: "Concluído",
-                notes: []
-            },
-            {
-                id: "UJ-CWV-LCP",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "CWV-LCP",
-                title: "Otimizar LCP (mobile + desktop)",
-                description: "Melhorar Largest Contentful Paint (>2,5s) em 524 páginas: imagens, recursos que bloqueiam renderização e prioridade de carga.",
-                sprint: "Sprint 2-5",
-                weeks: "Sem 4-9",
-                plannedStartDate: "2026-08-21",
-                plannedEndDate: "2026-09-25",
-                actualStartDate: "2026-08-21",
-                actualEndDate: "2026-09-25",
-                workDays: 26,
-                pagesAffected: 524,
-                pagesText: "524 páginas",
-                isCWV: true,
-                status: "Em Progresso",
-                notes: ["Acessos liberados em 21/08/2026."]
-            },
-            {
-                id: "UJ-CWV-INP",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "CWV-INP",
-                title: "Otimizar INP (mobile)",
-                description: "Melhorar Interaction to Next Paint (>200ms) em 355 páginas: reduzir trabalho de JS e melhorar resposta a interações.",
-                sprint: "Sprint 2-4",
-                weeks: "Sem 4-7",
-                plannedStartDate: "2026-08-21",
-                plannedEndDate: "2026-09-11",
-                actualStartDate: "2026-08-21",
-                actualEndDate: "2026-09-11",
-                workDays: 16,
-                pagesAffected: 355,
-                pagesText: "355 páginas",
-                isCWV: true,
-                status: "Em Progresso",
-                notes: []
-            },
-            {
-                id: "UJ-CWV-CLS",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "CWV CLS",
-                title: "Otimizar CLS (desktop)",
-                description: "Reduzir Cumulative Layout Shift (>0,1) em 259 páginas: reservar espaço para meios e evitar saltos de layout.",
-                sprint: "Sprint 3-4",
-                weeks: "Sem 5-7",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-09-11",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-09-11",
-                workDays: 15,
-                pagesAffected: 259,
-                pagesText: "259 páginas",
-                isCWV: true,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-02",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-02",
-                title: "Corrigir 2.501 links externos rotos",
-                description: "Correção progressiva por lotes de 2.501 links externos que devolvem erro.",
-                sprint: "Sprint 3-8",
-                weeks: "Sem 5-15",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-11-06",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-11-06",
-                workDays: 53,
-                pagesAffected: 2501,
-                pagesText: "2.501 links",
-                isCWV: false,
-                status: "Em Progresso",
-                notes: ["Lote 1 de 500 links em andamento."]
-            },
+    // --- 2. DADOS DAS 29 TAREFAS COM PRAZO (TRADUZIDAS DO PDF IRIDIAN) ---
+    const tarefasOriginais = [
+      { id: "UJ-ROBOTS", inst: "UJ", etiqueta: "Robots.txt", nome: "Configurar robots.txt", desc: "Criar e publicar robots.txt com diretivas de rastreamento/indexação corretas.", paginas: 1, unidade: "site", sprint: "Sprint 1", semanas: "Sem 1", inicioIridian: "2026-07-27", fimIridian: "2026-07-28", dias: 2 },
+      { id: "UJ-REND", inst: "UJ", etiqueta: "Rendimento", nome: "Reduzir tempo de carga de 13 páginas", desc: "Otimizar tempo de carga em 13 páginas priorizadas.", paginas: 13, unidade: "págs", sprint: "Sprint 1-2", semanas: "Sem 1-4", inicioIridian: "2026-07-29", fimIridian: "2026-08-18", dias: 13 },
+      { id: "UJ-LCP", inst: "UJ", etiqueta: "CWV-LCP", nome: "Otimizar LCP (mobile + desktop)", desc: "Melhorar Largest Contentful Paint (>2,5s) em 524 páginas: imagens, recursos bloqueantes.", paginas: 524, unidade: "págs", sprint: "Sprint 2-5", semanas: "Sem 4-9", inicioIridian: "2026-08-21", fimIridian: "2026-09-25", dias: 26 },
+      { id: "UJ-INP", inst: "UJ", etiqueta: "CWV-INP", nome: "Otimizar INP (mobile)", desc: "Melhorar Interaction to Next Paint (>200ms) em 355 páginas: reduzir trabalho de JS.", paginas: 355, unidade: "págs", sprint: "Sprint 2-4", semanas: "Sem 4-7", inicioIridian: "2026-08-21", fimIridian: "2026-09-11", dias: 16 },
+      { id: "UJ-CLS", inst: "UJ", etiqueta: "CWV-CLS", nome: "Otimizar CLS (desktop)", desc: "Reduzir Cumulative Layout Shift (>0,1) em 259 páginas: reservar espaço para mídia.", paginas: 259, unidade: "págs", sprint: "Sprint 3-4", semanas: "Sem 5-7", inicioIridian: "2026-08-24", fimIridian: "2026-09-11", dias: 15 },
+      { id: "UJ-02", inst: "UJ", etiqueta: "UJ-02", nome: "Corrigir 2.501 links externos quebrados", desc: "Correção progressiva por lotes de 2.501 links externos que retornam erro.", paginas: 2501, unidade: "links", sprint: "Sprint 3-8", semanas: "Sem 5-15", inicioIridian: "2026-08-24", fimIridian: "2026-11-06", dias: 53 },
+      { id: "UVA-LCP", inst: "UVA", etiqueta: "CWV-LCP", nome: "Otimizar LCP (mobile + desktop)", desc: "Melhorar Largest Contentful Paint (>2,5s) em 890 (mobile)/786 (desktop) páginas.", paginas: 1676, unidade: "págs", sprint: "Sprint 2-5", semanas: "Sem 4-10", inicioIridian: "2026-08-24", fimIridian: "2026-10-02", dias: 30 },
+      { id: "UVA-INP", inst: "UVA", etiqueta: "CWV-INP", nome: "Otimizar INP (mobile)", desc: "Melhorar Interaction to Next Paint (>200ms) em 359 páginas.", paginas: 359, unidade: "págs", sprint: "Sprint 2-4", semanas: "Sem 4-8", inicioIridian: "2026-08-24", fimIridian: "2026-09-18", dias: 20 },
+      { id: "UVA-CLS", inst: "UVA", etiqueta: "CWV-CLS", nome: "Otimizar CLS (mobile + desktop)", desc: "Reduzir Cumulative Layout Shift (>0,25 desktop / >0,1 mobile) em 107 páginas.", paginas: 107, unidade: "págs", sprint: "Sprint 3-4", semanas: "Sem 5-8", inicioIridian: "2026-08-24", fimIridian: "2026-09-18", dias: 20 },
+      { id: "UVA-01", inst: "UVA", etiqueta: "UVA-01", nome: "Corrigir 2.239 links externos quebrados", desc: "Correção progressiva por lotes de 2.239 links externos que retornam erro.", paginas: 2239, unidade: "links", sprint: "Sprint 3-8", semanas: "Sem 5-16", inicioIridian: "2026-08-24", fimIridian: "2026-11-13", dias: 58 },
+      { id: "UJ-03", inst: "UJ", etiqueta: "UJ-03", nome: "Corrigir 112 casos de conteúdo misto", desc: "Substituir recursos HTTP por HTTPS em páginas com conteúdo misto.", paginas: 112, unidade: "casos", sprint: "Sprint 3-4", semanas: "Sem 6-7", inicioIridian: "2026-08-31", fimIridian: "2026-09-11", dias: 10 },
+      { id: "UJ-04", inst: "UJ", etiqueta: "UJ-04", nome: "Corrigir 17 imagens externas quebradas", desc: "Localizar e substituir/atualizar 17 imagens externas quebradas.", paginas: 17, unidade: "imagens", sprint: "Sprint 3", semanas: "Sem 6", inicioIridian: "2026-08-31", fimIridian: "2026-09-03", dias: 4 },
+      { id: "UVA-02", inst: "UVA", etiqueta: "UVA-02", nome: "Corrigir 593 links HTTPS-HTTP", desc: "Corrigir 593 links em páginas HTTPS que apontam para HTTP.", paginas: 593, unidade: "links", sprint: "Sprint 3-5", semanas: "Sem 6-9", inicioIridian: "2026-08-31", fimIridian: "2026-09-25", dias: 20 },
+      { id: "UVA-03", inst: "UVA", etiqueta: "UVA-03", nome: "Minificar 435 arquivos JS/CSS", desc: "Minificação por lotes de 435 arquivos JavaScript/CSS com validação de não-regressão.", paginas: 435, unidade: "arquivos", sprint: "Sprint 3-7", semanas: "Sem 6-14", inicioIridian: "2026-08-31", fimIridian: "2026-10-30", dias: 44 },
+      { id: "UVA-04", inst: "UVA", etiqueta: "UVA-04", nome: "Corrigir 249 links internos quebrados", desc: "Investigar e corrigir 249 links internos quebrados.", paginas: 249, unidade: "links", sprint: "Sprint 4-5", semanas: "Sem 7-9", inicioIridian: "2026-09-07", fimIridian: "2026-09-25", dias: 15 },
+      { id: "UJ-06", inst: "UJ", etiqueta: "UJ-06", nome: "Minificar 5 arquivos JS/CSS", desc: "Minificar 5 arquivos JavaScript/CSS não minificados.", paginas: 5, unidade: "arquivos", sprint: "Sprint 4", semanas: "Sem 8", inicioIridian: "2026-09-14", fimIridian: "2026-09-16", dias: 3 },
+      { id: "UJ-07", inst: "UJ", etiqueta: "UJ-07", nome: "Corrigir 3 páginas com carga alta", desc: "Otimizar 3 páginas com tempo de carga elevado.", paginas: 3, unidade: "págs", sprint: "Sprint 4-5", semanas: "Sem 8-9", inicioIridian: "2026-09-17", fimIridian: "2026-09-21", dias: 3 },
+      { id: "UJ-08", inst: "UJ", etiqueta: "UJ-08", nome: "Corrigir 2 imagens internas quebradas", desc: "Localizar e substituir 2 imagens internas quebradas.", paginas: 2, unidade: "imagens", sprint: "Sprint 5", semanas: "Sem 9", inicioIridian: "2026-09-21", fimIridian: "2026-09-22", dias: 2 },
+      { id: "UVA-12", inst: "UVA", etiqueta: "UVA-12", nome: "Revisar 729 redirecionamentos (3xx)", desc: "Auditar e sanear 729 respostas 3xx (cadeias e loops de redirecionamento).", paginas: 729, unidade: "págs", sprint: "Sprint 5-6", semanas: "Sem 9-12", inicioIridian: "2026-09-21", fimIridian: "2026-10-16", dias: 19 },
+      { id: "UJ-10", inst: "UJ", etiqueta: "UJ-10", nome: "Corrigir 2 links HTTPS-HTTP", desc: "Corrigir 2 links em páginas HTTPS que apontam para HTTP.", paginas: 2, unidade: "links", sprint: "Sprint 5", semanas: "Sem 9", inicioIridian: "2026-09-23", fimIridian: "2026-09-24", dias: 2 },
+      { id: "UJ-11", inst: "UJ", etiqueta: "UJ-11", nome: "Corrigir 1 URL não rastreável", desc: "Corrigir 1 link com formato de URL incorreto que impede o rastreamento.", paginas: 1, unidade: "URL", sprint: "Sprint 5", semanas: "Sem 9", inicioIridian: "2026-09-25", fimIridian: "2026-09-25", dias: 1 },
+      { id: "UJ-12", inst: "UJ", etiqueta: "UJ-12", nome: "Corrigir 1 URL incorreta no sitemap.xml", desc: "Depurar a URL incorreta encontrada no sitemap.xml.", paginas: 1, unidade: "URL", sprint: "Sprint 5", semanas: "Sem 10", inicioIridian: "2026-09-28", fimIridian: "2026-09-28", dias: 1 },
+      { id: "UVA-05", inst: "UVA", etiqueta: "UVA-05", nome: "Corrigir 74 URLs incorretas no sitemap.xml", desc: "Depurar 74 URLs incorretas encontradas no sitemap.xml.", paginas: 74, unidade: "URLs", sprint: "Sprint 5", semanas: "Sem 10", inicioIridian: "2026-09-28", fimIridian: "2026-10-01", dias: 4 },
+      { id: "UJ-13", inst: "UJ", etiqueta: "UJ-13", nome: "Corrigir 1 URL com sublinhado", desc: "Normalizar 1 URL que contém sublinhado (com redirecionamento).", paginas: 1, unidade: "URL", sprint: "Sprint 5", semanas: "Sem 10", inicioIridian: "2026-09-29", fimIridian: "2026-09-29", dias: 1 },
+      { id: "UJ-14", inst: "UJ", etiqueta: "UJ-14", nome: "Corrigir 1 página sem doctype", desc: "Declarar o tipo de documento (doctype) em 1 página.", paginas: 1, unidade: "pág", sprint: "Sprint 5", semanas: "Sem 10", inicioIridian: "2026-09-30", fimIridian: "2026-09-30", dias: 1 },
+      { id: "UVA-08", inst: "UVA", etiqueta: "UVA-08", nome: "Corrigir 49 páginas com código 4XX", desc: "Diagnosticar e corrigir 49 páginas que retornam código 4XX.", paginas: 49, unidade: "págs", sprint: "Sprint 5-6", semanas: "Sem 10-11", inicioIridian: "2026-10-02", fimIridian: "2026-10-07", dias: 4 },
+      { id: "UVA-07", inst: "UVA", etiqueta: "UVA-07", nome: "Corrigir 28 URLs com excesso de parâmetros", desc: "Normalizar 28 URLs com parâmetros em excesso.", paginas: 28, unidade: "URLs", sprint: "Sprint 6", semanas: "Sem 11", inicioIridian: "2026-10-05", fimIridian: "2026-10-07", dias: 3 },
+      { id: "UVA-11", inst: "UVA", etiqueta: "UVA-11", nome: "Adequar 836 páginas ao Schema correto", desc: "Implementação por lotes de schema markup em 836 páginas (AEO/GEO).", paginas: 836, unidade: "págs", sprint: "Sprint 6-11", semanas: "Sem 11-22", inicioIridian: "2026-10-05", fimIridian: "2026-12-24", dias: 55 },
+      { id: "UVA-09", inst: "UVA", etiqueta: "UVA-09", nome: "Corrigir 2 URLs não rastreáveis", desc: "Corrigir 2 links com formato de URL incorreto que impedem o rastreamento.", paginas: 2, unidade: "URLs", sprint: "Sprint 6", semanas: "Sem 11", inicioIridian: "2026-10-08", fimIridian: "2026-10-09", dias: 2 }
+    ];
 
-            // Page 2 - UVA & UJ Tasks
-            {
-                id: "UVA-CWV-LCP",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "CWV-LCP",
-                title: "Otimizar LCP (mobile + desktop)",
-                description: "Melhorar Largest Contentful Paint (>2,5s) em 890 (mobile) / 786 (desktop) páginas: imagens, render-blocking e prioridade de carga.",
-                sprint: "Sprint 2-5",
-                weeks: "Sem 4-10",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-10-02",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-10-02",
-                workDays: 30,
-                pagesAffected: 1676,
-                pagesText: "1.676 páginas",
-                isCWV: true,
-                status: "Em Progresso",
-                notes: []
-            },
-            {
-                id: "UVA-CWV-INP",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "CWV INP",
-                title: "Otimizar INP (mobile)",
-                description: "Melhorar Interaction to Next Paint (>200ms) em 359 páginas: reduzir trabalho de JS e melhorar resposta a interações.",
-                sprint: "Sprint 2-4",
-                weeks: "Sem 4-8",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-09-18",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-09-18",
-                workDays: 20,
-                pagesAffected: 359,
-                pagesText: "359 páginas",
-                isCWV: true,
-                status: "Em Progresso",
-                notes: []
-            },
-            {
-                id: "UVA-CWV-CLS",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "CWV-CLS",
-                title: "Otimizar CLS (mobile + desktop)",
-                description: "Reduzir Cumulative Layout Shift (>0,25 desktop / >0,1 mobile) em 95+12 páginas: reservar espaço e evitar saltos de layout.",
-                sprint: "Sprint 3-4",
-                weeks: "Sem 5-8",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-09-18",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-09-18",
-                workDays: 20,
-                pagesAffected: 107,
-                pagesText: "107 páginas",
-                isCWV: true,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-01",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-01",
-                title: "Corrigir 2.239 links externos rotos",
-                description: "Correção progressiva por lotes de 2.239 links externos que devolvem erro.",
-                sprint: "Sprint 3-8",
-                weeks: "Sem 5-16",
-                plannedStartDate: "2026-08-24",
-                plannedEndDate: "2026-11-13",
-                actualStartDate: "2026-08-24",
-                actualEndDate: "2026-11-13",
-                workDays: 58,
-                pagesAffected: 2239,
-                pagesText: "2.239 links",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-03",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-03",
-                title: "Corrigir 112 casos de conteúdo misto",
-                description: "Substituir recursos HTTP por HTTPS em páginas com conteúdo misto.",
-                sprint: "Sprint 3-4",
-                weeks: "Sem 6-7",
-                plannedStartDate: "2026-08-31",
-                plannedEndDate: "2026-09-11",
-                actualStartDate: "2026-08-31",
-                actualEndDate: "2026-09-11",
-                workDays: 10,
-                pagesAffected: 112,
-                pagesText: "112 páginas",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-04",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-04",
-                title: "Corrigir 17 imagens externas rotas",
-                description: "Localizar e substituir/atualizar 17 imagens externas quebradas.",
-                sprint: "Sprint 3",
-                weeks: "Sem 6",
-                plannedStartDate: "2026-08-31",
-                plannedEndDate: "2026-09-03",
-                actualStartDate: "2026-08-31",
-                actualEndDate: "2026-09-03",
-                workDays: 4,
-                pagesAffected: 17,
-                pagesText: "17 imagens",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-02",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-02",
-                title: "Corrigir 593 links HTTPS-HTTP",
-                description: "Corrigir 593 links em páginas HTTPS que levam a HTTP (conteúdo misto).",
-                sprint: "Sprint 3-5",
-                weeks: "Sem 6-9",
-                plannedStartDate: "2026-08-31",
-                plannedEndDate: "2026-09-25",
-                actualStartDate: "2026-08-31",
-                actualEndDate: "2026-09-25",
-                workDays: 20,
-                pagesAffected: 593,
-                pagesText: "593 links",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-03",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-03",
-                title: "Minificar 435 arquivos JS/CSS",
-                description: "Minificação por lotes de 435 arquivos JavaScript/CSS, com validação de não-regressão.",
-                sprint: "Sprint 3-7",
-                weeks: "Sem 6-14",
-                plannedStartDate: "2026-08-31",
-                plannedEndDate: "2026-10-30",
-                actualStartDate: "2026-08-31",
-                actualEndDate: "2026-10-30",
-                workDays: 44,
-                pagesAffected: 435,
-                pagesText: "435 arquivos",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-04",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-04",
-                title: "Corrigir 249 links internos rotos",
-                description: "Investigar e corrigir 249 links internos quebrados.",
-                sprint: "Sprint 4-5",
-                weeks: "Sem 7-9",
-                plannedStartDate: "2026-09-07",
-                plannedEndDate: "2026-09-25",
-                actualStartDate: "2026-09-07",
-                actualEndDate: "2026-09-25",
-                workDays: 15,
-                pagesAffected: 249,
-                pagesText: "249 links",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-06",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-06",
-                title: "Minificar 5 arquivos JS/CSS",
-                description: "Minificar 5 arquivos JavaScript/CSS não minificados, com validação de não-regressão.",
-                sprint: "Sprint 4",
-                weeks: "Sem 8",
-                plannedStartDate: "2026-09-14",
-                plannedEndDate: "2026-09-16",
-                actualStartDate: "2026-09-14",
-                actualEndDate: "2026-09-16",
-                workDays: 3,
-                pagesAffected: 5,
-                pagesText: "5 arquivos",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-07",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-07",
-                title: "Corrigir 3 páginas com carga alta",
-                description: "Otimizar 3 páginas com tempo de carga elevado.",
-                sprint: "Sprint 4-5",
-                weeks: "Sem 8-9",
-                plannedStartDate: "2026-09-17",
-                plannedEndDate: "2026-09-21",
-                actualStartDate: "2026-09-17",
-                actualEndDate: "2026-09-21",
-                workDays: 3,
-                pagesAffected: 3,
-                pagesText: "3 páginas",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
+    // Clona e prepara o array dinâmico
+    let tarefas = tarefasOriginais.map(t => ({
+      ...t,
+      status: "nao_iniciado",
+      dataInicioReal: t.inicioIridian,
+      dataFimReal: t.fimIridian,
+      anotacoes: "",
+      descricao: t.desc
+    }));
 
-            // Page 3 - UJ & UVA Tasks
-            {
-                id: "UJ-08",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-08",
-                title: "Corrigir 2 imagens internas rotas",
-                description: "Localizar e substituir 2 imagens internas quebradas.",
-                sprint: "Sprint 5",
-                weeks: "Sem 9",
-                plannedStartDate: "2026-09-21",
-                plannedEndDate: "2026-09-22",
-                actualStartDate: "2026-09-21",
-                actualEndDate: "2026-09-22",
-                workDays: 2,
-                pagesAffected: 2,
-                pagesText: "2 imagens",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-12",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-12",
-                title: "Revisar 729 redirecionamentos (3xx)",
-                description: "Auditar e sanear 729 respostas 3xx (cadeias e loops de redirecionamento).",
-                sprint: "Sprint 5-6",
-                weeks: "Sem 9-12",
-                plannedStartDate: "2026-09-21",
-                plannedEndDate: "2026-10-16",
-                actualStartDate: "2026-09-21",
-                actualEndDate: "2026-10-16",
-                workDays: 19,
-                pagesAffected: 729,
-                pagesText: "729 redirecionamentos",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-10",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-10",
-                title: "Corrigir 2 links HTTPS-HTTP",
-                description: "Corrigir 2 links em páginas HTTPS que levam a HTTP.",
-                sprint: "Sprint 5",
-                weeks: "Sem 9",
-                plannedStartDate: "2026-09-23",
-                plannedEndDate: "2026-09-24",
-                actualStartDate: "2026-09-23",
-                actualEndDate: "2026-09-24",
-                workDays: 2,
-                pagesAffected: 2,
-                pagesText: "2 links",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-11",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-11",
-                title: "Corrigir 1 URL não rastreável",
-                description: "Corrigir 1 link com formato de URL incorreto que impede o rastreamento.",
-                sprint: "Sprint 5",
-                weeks: "Sem 9",
-                plannedStartDate: "2026-09-25",
-                plannedEndDate: "2026-09-25",
-                actualStartDate: "2026-09-25",
-                actualEndDate: "2026-09-25",
-                workDays: 1,
-                pagesAffected: 1,
-                pagesText: "1 URL",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-12",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-12",
-                title: "Corrigir 1 URL incorreta no sitemap.xml",
-                description: "Depurar a URL incorreta encontrada no sitemap.xml.",
-                sprint: "Sprint 5",
-                weeks: "Sem 10",
-                plannedStartDate: "2026-09-28",
-                plannedEndDate: "2026-09-28",
-                actualStartDate: "2026-09-28",
-                actualEndDate: "2026-09-28",
-                workDays: 1,
-                pagesAffected: 1,
-                pagesText: "1 URL",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-05",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-05",
-                title: "Corrigir 74 URLs incorretas no sitemap.xml",
-                description: "Depurar 74 URLs incorretas encontradas no sitemap.xml.",
-                sprint: "Sprint 5",
-                weeks: "Sem 10",
-                plannedStartDate: "2026-09-28",
-                plannedEndDate: "2026-10-01",
-                actualStartDate: "2026-09-28",
-                actualEndDate: "2026-10-01",
-                workDays: 4,
-                pagesAffected: 74,
-                pagesText: "74 URLs",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-13",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-13",
-                title: "Corrigir 1 URL com sublinhado",
-                description: "Normalizar 1 URL que contém sublinhado (com redirecionamento).",
-                sprint: "Sprint 5",
-                weeks: "Sem 10",
-                plannedStartDate: "2026-09-29",
-                plannedEndDate: "2026-09-29",
-                actualStartDate: "2026-09-29",
-                actualEndDate: "2026-09-29",
-                workDays: 1,
-                pagesAffected: 1,
-                pagesText: "1 URL",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UJ-14",
-                institution: "Unijorge",
-                instCode: "UJ",
-                tag: "UJ-14",
-                title: "Corrigir 1 página sem doctype",
-                description: "Declarar o tipo de documento (doctype) em 1 página.",
-                sprint: "Sprint 5",
-                weeks: "Sem 10",
-                plannedStartDate: "2026-09-30",
-                plannedEndDate: "2026-09-30",
-                actualStartDate: "2026-09-30",
-                actualEndDate: "2026-09-30",
-                workDays: 1,
-                pagesAffected: 1,
-                pagesText: "1 página",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-08",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-08",
-                title: "Corrigir 49 páginas com código 4XX",
-                description: "Diagnosticar e corrigir 49 páginas que devolvem código 4XX.",
-                sprint: "Sprint 5-6",
-                weeks: "Sem 10-11",
-                plannedStartDate: "2026-10-02",
-                plannedEndDate: "2026-10-07",
-                actualStartDate: "2026-10-02",
-                actualEndDate: "2026-10-07",
-                workDays: 4,
-                pagesAffected: 49,
-                pagesText: "49 páginas",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-07",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-07",
-                title: "Corrigir 28 URLs com excesso de parâmetros",
-                description: "Normalizar 28 URLs com parâmetros em excesso.",
-                sprint: "Sprint 6",
-                weeks: "Sem 11",
-                plannedStartDate: "2026-10-05",
-                plannedEndDate: "2026-10-07",
-                actualStartDate: "2026-10-05",
-                actualEndDate: "2026-10-07",
-                workDays: 3,
-                pagesAffected: 28,
-                pagesText: "28 URLs",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-11",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-11",
-                title: "Adequar 836 páginas ao Schema correto",
-                description: "Implementação por lotes de schema markup em 836 páginas (AEO/GEO).",
-                sprint: "Sprint 6-11",
-                weeks: "Sem 11-22",
-                plannedStartDate: "2026-10-05",
-                plannedEndDate: "2026-12-24",
-                actualStartDate: "2026-10-05",
-                actualEndDate: "2026-12-24",
-                workDays: 55,
-                pagesAffected: 836,
-                pagesText: "836 páginas",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
-            },
-            {
-                id: "UVA-09",
-                institution: "UVA",
-                instCode: "UVA",
-                tag: "UVA-09",
-                title: "Corrigir 2 URLs não rastreáveis",
-                description: "Corrigir 2 links com formato de URL incorreto que impedem o rastreamento.",
-                sprint: "Sprint 6",
-                weeks: "Sem 11",
-                plannedStartDate: "2026-10-08",
-                plannedEndDate: "2026-10-09",
-                actualStartDate: "2026-10-08",
-                actualEndDate: "2026-10-09",
-                workDays: 2,
-                pagesAffected: 2,
-                pagesText: "2 URLs",
-                isCWV: false,
-                status: "Pendente",
-                notes: []
+    let tarefaEmEdicaoId = null;
+
+    // --- 3. CONEXÃO E SINCRONIZAÇÃO SUPABASE ---
+
+    function atualizarStatusBadge(texto, tipo) {
+      const badge = document.getElementById("dbStatusBadge");
+      const textSpan = document.getElementById("dbStatusText");
+      textSpan.innerText = texto;
+
+      if (tipo === 'success') {
+        badge.className = "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-medium";
+      } else if (tipo === 'error') {
+        badge.className = "bg-rose-500/10 border border-rose-500/30 text-rose-400 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-medium";
+      } else {
+        badge.className = "bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-medium";
+      }
+    }
+
+    async function carregarDadosDoBanco() {
+      atualizarStatusBadge("Sincronizando com Supabase...", "loading");
+      try {
+        const { data, error } = await supabaseClient
+          .from('tarefas_seo')
+          .select('*');
+
+        if (error) {
+          console.warn("Aviso ao buscar do Supabase:", error.message);
+          atualizarStatusBadge("Modo offline (Tabela não encontrada)", "error");
+        } else if (data && data.length > 0) {
+          data.forEach(itemSalvo => {
+            const t = tarefas.find(x => x.id === itemSalvo.id);
+            if (t) {
+              if (itemSalvo.status) t.status = itemSalvo.status;
+              if (itemSalvo.anotacoes !== undefined && itemSalvo.anotacoes !== null) t.anotacoes = itemSalvo.anotacoes;
+              if (itemSalvo.descricao_custom) t.descricao = itemSalvo.descricao_custom;
+              if (itemSalvo.data_inicio_real) t.dataInicioReal = itemSalvo.data_inicio_real;
+              if (itemSalvo.data_fim_real) t.dataFimReal = itemSalvo.data_fim_real;
             }
-        ];
-
-        let tasksState = [];
-        let activeTaskId = null;
-
-        // Custom status configuration
-        let customStatuses = [
-            { id: "Pendente", label: "Pendente", color: "#64748b" },
-            { id: "Em Progresso", label: "Em Progresso", color: "#0284c7" },
-            { id: "Em Revisão", label: "Em Revisão", color: "#a855f7" },
-            { id: "Concluído", label: "Concluído", color: "#10b981" },
-            { id: "Impedido", label: "Impedido", color: "#ef4444" }
-        ];
-
-        // Initialize App State
-        function initApp() {
-            const savedState = localStorage.getItem('gantt_seo_tasks_v2');
-            if (savedState) {
-                try {
-                    tasksState = JSON.parse(savedState);
-                } catch(e) {
-                    tasksState = JSON.parse(JSON.stringify(rawTasks));
-                }
-            } else {
-                tasksState = JSON.parse(JSON.stringify(rawTasks));
-            }
-
-            const savedStatus = localStorage.getItem('gantt_seo_custom_statuses');
-            if (savedStatus) {
-                try { customStatuses = JSON.parse(savedStatus); } catch(e) {}
-            }
-
-            renderGantt();
-            renderTable();
-            updateMetrics();
-            populateModalStatusOptions();
+          });
+          atualizarStatusBadge("Conectado ao Supabase • Sincronizado", "success");
+        } else {
+          atualizarStatusBadge("Conectado ao Supabase • Sem edições", "success");
         }
+      } catch (err) {
+        console.error("Erro Supabase:", err);
+        atualizarStatusBadge("Erro na Conexão", "error");
+      }
+      renderizarTudo();
+    }
 
-        function saveState() {
-            localStorage.setItem('gantt_seo_tasks_v2', JSON.stringify(tasksState));
-            localStorage.setItem('gantt_seo_custom_statuses', JSON.stringify(customStatuses));
-            updateMetrics();
+    async function salvarTarefaNoBanco(t) {
+      atualizarStatusBadge("Salvando alterações...", "loading");
+      try {
+        const { error } = await supabaseClient
+          .from('tarefas_seo')
+          .upsert({
+            id: t.id,
+            status: t.status,
+            anotacoes: t.anotacoes || '',
+            descricao_custom: t.descricao || '',
+            data_inicio_real: t.dataInicioReal,
+            data_fim_real: t.dataFimReal
+          }, { onConflict: 'id' });
+
+        if (error) {
+          console.error("Erro ao salvar:", error);
+          atualizarStatusBadge("Erro ao Salvar", "error");
+          alert("Erro ao salvar no Supabase: " + error.message);
+        } else {
+          atualizarStatusBadge("Alterações salvas com sucesso!", "success");
         }
+      } catch (err) {
+        console.error("Erro:", err);
+        atualizarStatusBadge("Falha de conexão", "error");
+      }
+    }
 
-        // Tab Switching Logic
-        function switchTab(tabName) {
-            ['gantt', 'table', 'doc'].forEach(t => {
-                const btn = document.getElementById(`btn-tab-${t}`);
-                const content = document.getElementById(`tab-${t}-content`);
-                if (t === tabName) {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium bg-cyan-600 text-white shadow transition-all duration-150";
-                    content.classList.remove('hidden');
-                } else {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all duration-150";
-                    content.classList.add('hidden');
-                }
-            });
-        }
+    // --- 4. CÁLCULOS E RENDERIZAÇÃO DA INTERFACE ---
 
-        // Timeline positioning calculations (July 20, 2026 to Dec 31, 2026)
-        const timelineStart = new Date("2026-07-20").getTime();
-        const timelineEnd = new Date("2026-12-31").getTime();
-        const totalDuration = timelineEnd - timelineStart;
+    const DATA_MINIMA_GANTT = new Date("2026-07-20").getTime();
+    const DATA_MAXIMA_GANTT = new Date("2026-12-31").getTime();
+    const TOTAL_DIAS_GANTT = (DATA_MAXIMA_GANTT - DATA_MINIMA_GANTT) / (1000 * 3600 * 24);
 
-        function getPositionPct(dateStr) {
-            if (!dateStr) return 0;
-            const t = new Date(dateStr).getTime();
-            const pct = ((t - timelineStart) / totalDuration) * 100;
-            return Math.max(0, Math.min(100, pct));
-        }
+    function calcularPosicaoBarra(strInicio, strFim) {
+      const ini = new Date(strInicio).getTime();
+      const fim = new Date(strFim).getTime();
+      
+      let leftPct = ((ini - DATA_MINIMA_GANTT) / (1000 * 3600 * 24) / TOTAL_DIAS_GANTT) * 100;
+      let widthPct = (((fim - ini) / (1000 * 3600 * 24) + 1) / TOTAL_DIAS_GANTT) * 100;
 
-        function getStatusObj(statusName) {
-            return customStatuses.find(s => s.label === statusName) || { label: statusName, color: "#64748b" };
-        }
+      if (leftPct < 0) leftPct = 0;
+      if (widthPct < 1.5) widthPct = 1.5; // largura mínima visível
 
-        function renderGantt() {
-            const container = document.getElementById('gantt-rows-container');
-            const filtered = getFilteredTasks();
+      return { left: leftPct.toFixed(2) + '%', width: widthPct.toFixed(2) + '%' };
+    }
 
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-slate-500 text-xs">Nenhuma tarefa encontrada para os filtros selecionados.</div>`;
-                return;
-            }
+    function getStatusBadgeHTML(status) {
+      switch (status) {
+        case 'concluido':
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Concluído</span>`;
+        case 'em_andamento':
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">Em Andamento</span>`;
+        case 'em_revisao':
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">Em Revisão</span>`;
+        case 'bloqueado':
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30">Bloqueado</span>`;
+        default:
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">Pendente</span>`;
+      }
+    }
 
-            container.innerHTML = filtered.map(task => {
-                const isUJ = task.instCode === 'UJ';
-                const instBadgeBg = isUJ ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-                const statusObj = getStatusObj(task.status);
+    function formatarDataBR(strData) {
+      if (!strData) return "-";
+      const parts = strData.split("-");
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return strData;
+    }
 
-                // 1. Iridian Planned Baseline Bar
-                const planLeft = getPositionPct(task.plannedStartDate);
-                const planRight = getPositionPct(task.plannedEndDate);
-                const planWidth = Math.max(1.2, planRight - planLeft);
+    function renderizarTudo() {
+      const searchVal = document.getElementById("searchInput").value.toLowerCase();
+      const instVal = document.getElementById("filterInst").value;
+      const statusVal = document.getElementById("filterStatus").value;
 
-                // 2. User Execution Bar (Nossa Aplicação)
-                const actStart = task.actualStartDate || task.plannedStartDate;
-                const actEnd = task.actualEndDate || task.plannedEndDate;
-                const actLeft = getPositionPct(actStart);
-                const actRight = getPositionPct(actEnd);
-                const actWidth = Math.max(1.2, actRight - actLeft);
+      const tarefasFiltradas = tarefas.filter(t => {
+        const matchSearch = t.nome.toLowerCase().includes(searchVal) || 
+                            t.etiqueta.toLowerCase().includes(searchVal) ||
+                            t.id.toLowerCase().includes(searchVal);
+        const matchInst = (instVal === "ALL") || (t.inst === instVal);
+        const matchStatus = (statusVal === "ALL") || (t.status === statusVal);
 
-                const executionColor = isUJ 
-                    ? 'bg-gradient-to-r from-sky-500 to-cyan-400 border border-sky-300/40 shadow-sm'
-                    : 'bg-gradient-to-r from-purple-500 to-indigo-400 border border-purple-300/40 shadow-sm';
+        return matchSearch && matchInst && matchStatus;
+      });
 
-                const notesCount = task.notes ? task.notes.length : 0;
+      renderizarGantt(tarefasFiltradas);
+      renderizarTabela(tarefasFiltradas);
+      lucide.createIcons();
+    }
 
-                return `
-                    <div class="grid grid-cols-12 hover:bg-slate-800/40 transition items-center py-2.5">
-                        <!-- Left Info Column -->
-                        <div class="col-span-4 px-3 border-r border-slate-800/80 space-y-1">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${instBadgeBg}">${task.instCode}</span>
-                                <span class="text-xs font-semibold text-slate-200">${task.tag}</span>
-                                ${task.isCWV ? '<span class="px-1.5 py-0.2 bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] rounded font-semibold"><i class="fa-solid fa-bolt"></i> CWV</span>' : ''}
-                                <span class="ml-auto px-2 py-0.5 rounded text-[10px] font-medium text-white shadow-sm" style="background-color: ${statusObj.color}">
-                                    ${task.status}
-                                </span>
-                            </div>
+    function renderizarGantt(lista) {
+      const container = document.getElementById("ganttContainer");
+      if (lista.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">Nenhuma tarefa encontrada com os filtros selecionados.</div>`;
+        return;
+      }
 
-                            <div class="text-slate-300 font-medium truncate cursor-pointer hover:text-cyan-400 transition" onclick="openNotesModal('${task.id}')" title="Clique para editar prazo ou anotações: ${task.title}">
-                                ${task.title}
-                            </div>
+      container.innerHTML = lista.map(t => {
+        const posIridian = calcularPosicaoBarra(t.inicioIridian, t.fimIridian);
+        const posReal = calcularPosicaoBarra(t.dataInicioReal, t.dataFimReal);
+        const badgeInstClass = t.inst === 'UJ' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
 
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="text-emerald-400 font-medium">
-                                    <i class="fa-regular fa-file-lines mr-1"></i>${task.pagesText}
-                                </span>
-                                <button onclick="openNotesModal('${task.id}')" class="text-slate-400 hover:text-cyan-400 transition flex items-center gap-1">
-                                    <i class="fa-solid fa-sliders text-cyan-400"></i>
-                                    <span>${notesCount} ${notesCount === 1 ? 'nota' : 'notas'}</span>
-                                </button>
-                            </div>
-                        </div>
+        return `
+          <div class="grid grid-cols-12 gap-0 items-center bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/80 hover:border-slate-700 transition">
+            <!-- Coluna Nome e Marcadores (4 cols) -->
+            <div class="col-span-4 pr-3 flex flex-col justify-center space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeInstClass}">${t.inst}</span>
+                <span class="text-xs font-bold text-indigo-300">${t.etiqueta}</span>
+                ${getStatusBadgeHTML(t.status)}
+              </div>
+              <div class="text-xs font-medium text-slate-200 truncate" title="${t.nome}">${t.nome}</div>
+              <div class="text-[11px] text-slate-400 flex items-center gap-2">
+                <span>Impacto: <strong class="text-slate-300">${t.paginas.toLocaleString('pt-BR')} ${t.unidade}</strong></span>
+                <span>•</span>
+                <button onclick="abrirModal('${t.id}')" class="text-indigo-400 hover:underline flex items-center gap-0.5">
+                  <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
+                </button>
+              </div>
+            </div>
 
-                        <!-- Right Dual Gantt Bar Column -->
-                        <div class="col-span-8 relative h-10 flex flex-col justify-center gap-1 px-2 gantt-grid cursor-pointer" onclick="openNotesModal('${task.id}')">
-                            <!-- Baseline Bar (Iridian) -->
-                            <div class="absolute top-1 h-3 rounded bg-slate-800 border border-slate-500/70 flex items-center px-1 text-[9px] text-slate-300 font-medium z-10"
-                                style="left: ${planLeft}%; width: ${planWidth}%;"
-                                title="Prazo Iridian: ${formatDate(task.plannedStartDate)} a ${formatDate(task.plannedEndDate)}">
-                                <span class="truncate opacity-75">Iridian: ${formatDate(task.plannedStartDate)}</span>
-                            </div>
-
-                            <!-- Execution Bar (Sua Aplicação) -->
-                            <div class="absolute bottom-1 h-3.5 rounded-md ${executionColor} flex items-center px-1.5 text-[9px] text-white font-bold z-20 hover:brightness-125 transition"
-                                style="left: ${actLeft}%; width: ${actWidth}%;"
-                                title="Sua Aplicação: ${formatDate(actStart)} a ${formatDate(actEnd)}">
-                                <span class="truncate">Aplicação: ${formatDate(actStart)} - ${formatDate(actEnd)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderTable() {
-            const container = document.getElementById('table-rows-container');
-            const filtered = getFilteredTasks();
-
-            document.getElementById('table-row-count').innerText = `Exibindo ${filtered.length} de ${tasksState.length} tarefas com prazo`;
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500">Nenhuma tarefa corresponde aos filtros aplicados.</td></tr>`;
-                return;
-            }
-
-            container.innerHTML = filtered.map(task => {
-                const isUJ = task.instCode === 'UJ';
-                const instBadgeBg = isUJ ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-                const statusObj = getStatusObj(task.status);
-                const notesCount = task.notes ? task.notes.length : 0;
-
-                const actStart = task.actualStartDate || task.plannedStartDate;
-                const actEnd = task.actualEndDate || task.plannedEndDate;
-
-                return `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="p-3">
-                            <span class="px-2 py-0.5 rounded text-xs font-bold border ${instBadgeBg}">${task.instCode}</span>
-                        </td>
-                        <td class="p-3">
-                            <span class="font-bold text-slate-200">${task.tag}</span>
-                            ${task.isCWV ? '<span class="block text-[10px] text-amber-400 font-semibold mt-0.5"><i class="fa-solid fa-bolt"></i> CWV</span>' : ''}
-                        </td>
-                        <td class="p-3 max-w-xs">
-                            <div class="font-semibold text-slate-100">${task.title}</div>
-                            <div class="text-[11px] text-slate-400 line-clamp-2 mt-0.5">${task.description}</div>
-                        </td>
-                        <td class="p-3 font-semibold text-emerald-400">
-                            ${task.pagesText}
-                        </td>
-                        <td class="p-3 text-slate-400 font-mono text-[11px]">
-                            ${formatDate(task.plannedStartDate)} a ${formatDate(task.plannedEndDate)}
-                            <div class="text-[10px] text-slate-500 font-sans">${task.sprint} (${task.weeks})</div>
-                        </td>
-                        <td class="p-3 text-cyan-300 font-mono text-[11px] font-semibold">
-                            ${formatDate(actStart)} a ${formatDate(actEnd)}
-                            <button onclick="openNotesModal('${task.id}')" class="block text-[10px] text-slate-400 font-sans hover:text-cyan-400 underline mt-0.5">Ajustar prazo</button>
-                        </td>
-                        <td class="p-3">
-                            <select onchange="changeTaskStatus('${task.id}', this.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white focus:outline-none" style="border-left: 3px solid ${statusObj.color}">
-                                ${customStatuses.map(s => `
-                                    <option value="${s.label}" ${s.label === task.status ? 'selected' : ''}>${s.label}</option>
-                                `).join('')}
-                            </select>
-                        </td>
-                        <td class="p-3 text-center">
-                            <button onclick="openNotesModal('${task.id}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs transition inline-flex items-center gap-1.5">
-                                <i class="fa-solid fa-pen-to-square text-cyan-400"></i>
-                                <span>Editar (${notesCount})</span>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function getFilteredTasks() {
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const instFilter = document.getElementById('filter-institution').value;
-            const typeFilter = document.getElementById('filter-type').value;
-            const statusFilter = document.getElementById('filter-status').value;
-
-            return tasksState.filter(task => {
-                if (search && !task.title.toLowerCase().includes(search) && 
-                    !task.tag.toLowerCase().includes(search) && 
-                    !task.description.toLowerCase().includes(search) && 
-                    !task.institution.toLowerCase().includes(search)) {
-                    return false;
-                }
-
-                if (instFilter !== 'ALL' && task.institution !== instFilter) return false;
-                if (typeFilter === 'CWV' && !task.isCWV) return false;
-                if (typeFilter === 'STANDARD' && task.isCWV) return false;
-                if (statusFilter !== 'ALL' && task.status !== statusFilter) return false;
-
-                return true;
-            });
-        }
-
-        function applyFilters() {
-            renderGantt();
-            renderTable();
-        }
-
-        function updateMetrics() {
-            document.getElementById('stat-total-tasks').innerText = tasksState.length;
-            const totalPages = tasksState.reduce((acc, t) => acc + (t.pagesAffected || 0), 0);
-            document.getElementById('stat-total-pages').innerText = totalPages.toLocaleString('pt-BR');
-
-            const cwvTasks = tasksState.filter(t => t.isCWV).length;
-            document.getElementById('stat-cwv-tasks').innerText = cwvTasks;
-        }
-
-        function formatDate(dStr) {
-            if (!dStr) return '';
-            const parts = dStr.split('-');
-            if (parts.length !== 3) return dStr;
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-
-        function openNotesModal(taskId) {
-            activeTaskId = taskId;
-            const task = tasksState.find(t => t.id === taskId);
-            if (!task) return;
-
-            document.getElementById('modal-task-code-title').innerText = `[${task.tag}] ${task.title}`;
-            document.getElementById('modal-task-desc-input').value = task.description || '';
-            document.getElementById('modal-task-pages').innerText = task.pagesText;
-            document.getElementById('modal-task-sprint-info').innerText = `${task.sprint} (${task.weeks})`;
-            document.getElementById('modal-iridian-dates').innerText = `${formatDate(task.plannedStartDate)} a ${formatDate(task.plannedEndDate)}`;
-            
-            // Populate execution date pickers
-            document.getElementById('modal-actual-start').value = task.actualStartDate || task.plannedStartDate;
-            document.getElementById('modal-actual-end').value = task.actualEndDate || task.plannedEndDate;
-
-            const badge = document.getElementById('modal-inst-badge');
-            badge.innerText = task.instCode;
-            badge.className = task.instCode === 'UJ' 
-                ? 'px-2 py-0.5 rounded text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30'
-                : 'px-2 py-0.5 rounded text-xs font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30';
-
-            renderModalNotesList(task);
-            populateModalStatusOptions(task.status);
-
-            document.getElementById('modal-notes').classList.remove('hidden');
-        }
-
-        function closeNotesModal() {
-            document.getElementById('modal-notes').classList.add('hidden');
-            activeTaskId = null;
-        }
-
-        function renderModalNotesList(task) {
-            const listContainer = document.getElementById('modal-notes-list');
-            document.getElementById('modal-notes-count').innerText = task.notes ? task.notes.length : 0;
-
-            if (!task.notes || task.notes.length === 0) {
-                listContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs italic bg-slate-950/40 rounded-lg">Nenhuma anotação ou observação inserida ainda.</div>`;
-                return;
-            }
-
-            listContainer.innerHTML = task.notes.map((note, index) => `
-                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-start justify-between gap-2">
-                    <p class="text-slate-200 text-xs leading-relaxed whitespace-pre-wrap flex-1">${note}</p>
-                    <button onclick="deleteNote(${index})" class="text-slate-500 hover:text-rose-400 transition text-xs p-1">
-                        <i class="fa-regular fa-trash-can"></i>
-                    </button>
+            <!-- Coluna Timeline com Dupla Barra (8 cols) -->
+            <div class="col-span-8 relative h-12 bg-slate-900/80 rounded border border-slate-800/60 overflow-hidden flex flex-col justify-center gap-1 px-1">
+              
+              <!-- Linha 1: Régua Iridian -->
+              <div class="relative w-full h-3.5 bg-slate-950/40 rounded">
+                <div class="absolute h-full bg-indigo-600/90 rounded text-[9px] text-white font-semibold flex items-center justify-between px-1 shadow-sm" 
+                     style="left: ${posIridian.left}; width: ${posIridian.width};"
+                     title="Prazo Iridian: ${formatarDataBR(t.inicioIridian)} até ${formatarDataBR(t.fimIridian)}">
+                  <span class="truncate">Iridian</span>
                 </div>
-            `).join('');
-        }
+              </div>
 
-        function saveAllTaskDetailsFromModal() {
-            if (!activeTaskId) return;
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (!task) return;
-
-            // Update Description
-            const newDesc = document.getElementById('modal-task-desc-input').value.trim();
-            if (newDesc) task.description = newDesc;
-
-            // Update Status
-            const newStatus = document.getElementById('modal-status-select').value;
-            task.status = newStatus;
-
-            // Update Execution Dates
-            const actStart = document.getElementById('modal-actual-start').value;
-            const actEnd = document.getElementById('modal-actual-end').value;
-
-            if (actStart) task.actualStartDate = actStart;
-            if (actEnd) task.actualEndDate = actEnd;
-
-            saveState();
-            renderGantt();
-            renderTable();
-            closeNotesModal();
-            showToast("Alterações e prazos da tarefa salvos!");
-        }
-
-        function saveNoteOnlyFromModal() {
-            if (!activeTaskId) return;
-            const input = document.getElementById('modal-note-input');
-            const noteText = input.value.trim();
-            if (!noteText) return;
-
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (!task.notes) task.notes = [];
-            
-            const timeStamp = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            task.notes.push(`[${timeStamp}] ${noteText}`);
-
-            input.value = '';
-            saveState();
-            renderModalNotesList(task);
-            renderGantt();
-            renderTable();
-            showToast("Observação adicionada!");
-        }
-
-        function deleteNote(index) {
-            if (!activeTaskId) return;
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (task && task.notes) {
-                task.notes.splice(index, 1);
-                saveState();
-                renderModalNotesList(task);
-                renderGantt();
-                renderTable();
-                showToast("Observação removida.");
-            }
-        }
-
-        function changeTaskStatus(taskId, newStatus) {
-            const task = tasksState.find(t => t.id === taskId);
-            if (task) {
-                task.status = newStatus;
-                saveState();
-                renderGantt();
-                renderTable();
-                showToast(`Status alterado para "${newStatus}"`);
-            }
-        }
-
-        function populateModalStatusOptions(currentStatus) {
-            const select = document.getElementById('modal-status-select');
-            select.innerHTML = customStatuses.map(s => `
-                <option value="${s.label}" ${s.label === currentStatus ? 'selected' : ''}>${s.label}</option>
-            `).join('');
-        }
-
-        function openCustomStatusModal() {
-            renderCustomStatusList();
-            document.getElementById('modal-custom-status').classList.remove('hidden');
-        }
-
-        function closeCustomStatusModal() {
-            document.getElementById('modal-custom-status').classList.add('hidden');
-        }
-
-        function renderCustomStatusList() {
-            const container = document.getElementById('custom-status-list');
-            container.innerHTML = customStatuses.map((s, idx) => `
-                <div class="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full" style="background-color: ${s.color}"></span>
-                        <span class="font-medium text-slate-200">${s.label}</span>
-                    </div>
-                    ${idx > 4 ? `<button onclick="removeCustomStatus('${s.id}')" class="text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : '<span class="text-[10px] text-slate-500">Padrão</span>'}
+              <!-- Linha 2: Execução Interna (Manipulado) -->
+              <div class="relative w-full h-3.5 bg-slate-950/40 rounded">
+                <div class="absolute h-full bg-amber-500/90 rounded text-[9px] text-slate-950 font-extrabold flex items-center justify-between px-1 shadow-sm" 
+                     style="left: ${posReal.left}; width: ${posReal.width};"
+                     title="Prazo Execução: ${formatarDataBR(t.dataInicioReal)} até ${formatarDataBR(t.dataFimReal)}">
+                  <span class="truncate">Execução Interna</span>
                 </div>
-            `).join('');
-        }
+              </div>
 
-        function addNewCustomStatus() {
-            const labelInput = document.getElementById('new-status-label');
-            const colorInput = document.getElementById('new-status-color');
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-            const label = labelInput.value.trim();
-            const color = colorInput.value;
+    function renderizarTabela(lista) {
+      const container = document.getElementById("tabelaContainer");
+      if (lista.length === 0) {
+        container.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">Nenhuma tarefa encontrada.</td></tr>`;
+        return;
+      }
 
-            if (!label) return;
+      container.innerHTML = lista.map(t => {
+        const badgeInstClass = t.inst === 'UJ' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
 
-            if (customStatuses.some(s => s.label.toLowerCase() === label.toLowerCase())) {
-                showToast("Já existe um status com este nome!", "error");
-                return;
-            }
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-xs font-bold border ${badgeInstClass}">${t.inst}</span>
+            </td>
+            <td class="py-3 px-4">
+              <div class="font-semibold text-slate-200">${t.etiqueta}</div>
+              <div class="text-xs text-slate-400 truncate max-w-xs">${t.nome}</div>
+            </td>
+            <td class="py-3 px-4 text-xs font-medium text-slate-300">
+              ${t.paginas.toLocaleString('pt-BR')} ${t.unidade}
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-400">
+              <div>${formatarDataBR(t.inicioIridian)} à ${formatarDataBR(t.fimIridian)}</div>
+              <div class="text-[10px] text-slate-500">(${t.dias} dias úteis)</div>
+            </td>
+            <td class="py-3 px-4 text-xs">
+              <div class="flex items-center gap-1">
+                <input type="date" value="${t.dataInicioReal}" 
+                       onchange="atualizarDataInline('${t.id}', 'inicio', this.value)"
+                       class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-xs text-amber-300 focus:outline-none">
+                <span class="text-slate-500">à</span>
+                <input type="date" value="${t.dataFimReal}" 
+                       onchange="atualizarDataInline('${t.id}', 'fim', this.value)"
+                       class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-xs text-amber-300 focus:outline-none">
+              </div>
+            </td>
+            <td class="py-3 px-4">
+              <select onchange="atualizarStatusInline('${t.id}', this.value)" 
+                      class="bg-slate-950 border border-slate-800 text-xs rounded px-2 py-1 text-slate-200 focus:outline-none">
+                <option value="nao_iniciado" ${t.status === 'nao_iniciado' ? 'selected' : ''}>Pendente</option>
+                <option value="em_andamento" ${t.status === 'em_andamento' ? 'selected' : ''}>Em Andamento</option>
+                <option value="em_revisao" ${t.status === 'em_revisao' ? 'selected' : ''}>Em Revisão</option>
+                <option value="concluido" ${t.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                <option value="bloqueado" ${t.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
+              </select>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <button onclick="abrirModal('${t.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition" title="Editar Detalhes">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
 
-            const newStatus = { id: label, label: label, color: color };
-            customStatuses.push(newStatus);
-            
-            const filterSel = document.getElementById('filter-status');
-            const opt = document.createElement('option');
-            opt.value = label;
-            opt.innerText = label;
-            filterSel.appendChild(opt);
+    // --- 5. AÇÕES DE EDIÇÃO RÁPIDA E MODAL ---
 
-            labelInput.value = '';
-            saveState();
-            renderCustomStatusList();
-            populateModalStatusOptions();
-            showToast(`Status "${label}" adicionado!`);
-        }
+    function atualizarStatusInline(id, novoStatus) {
+      const t = tarefas.find(x => x.id === id);
+      if (t) {
+        t.status = novoStatus;
+        salvarTarefaNoBanco(t);
+        renderizarTudo();
+      }
+    }
 
-        function removeCustomStatus(id) {
-            customStatuses = customStatuses.filter(s => s.id !== id);
-            saveState();
-            renderCustomStatusList();
-            populateModalStatusOptions();
-            showToast("Status personalizado removido.");
-        }
+    function atualizarDataInline(id, tipo, novaData) {
+      const t = tarefas.find(x => x.id === id);
+      if (t) {
+        if (tipo === 'inicio') t.dataInicioReal = novaData;
+        if (tipo === 'fim') t.dataFimReal = novaData;
+        salvarTarefaNoBanco(t);
+        renderizarTudo();
+      }
+    }
 
-        function showToast(message, type = "success") {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `px-4 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xl flex items-center gap-2 border ${type === 'success' ? 'bg-cyan-600 border-cyan-500' : 'bg-rose-600 border-rose-500'} transition-all duration-300 transform translate-y-2 opacity-0`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${message}`;
-            
-            container.appendChild(toast);
+    function abrirModal(id) {
+      const t = tarefas.find(x => x.id === id);
+      if (!t) return;
 
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
+      tarefaEmEdicaoId = id;
+      const modalInstBadge = document.getElementById("modalInstBadge");
+      modalInstBadge.innerText = t.inst;
+      modalInstBadge.className = t.inst === 'UJ' ? 'px-2.5 py-1 rounded text-xs font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'px-2.5 py-1 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
 
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+      document.getElementById("modalTitle").innerText = `${t.etiqueta} - ${t.nome}`;
+      document.getElementById("modalStatus").value = t.status;
+      document.getElementById("modalPaginas").value = `${t.paginas.toLocaleString('pt-BR')} ${t.unidade}`;
+      document.getElementById("modalDataInicioReal").value = t.dataInicioReal;
+      document.getElementById("modalDataFimReal").value = t.dataFimReal;
+      document.getElementById("modalDescricao").value = t.descricao;
+      document.getElementById("modalAnotacoes").value = t.anotacoes || "";
 
-        window.onload = function() {
-            initApp();
-        };
-    </script>
+      document.getElementById("editModal").classList.remove("hidden");
+    }
+
+    function fecharModal() {
+      document.getElementById("editModal").classList.add("hidden");
+      tarefaEmEdicaoId = null;
+    }
+
+    function salvarModal() {
+      if (!tarefaEmEdicaoId) return;
+      const t = tarefas.find(x => x.id === tarefaEmEdicaoId);
+      if (t) {
+        t.status = document.getElementById("modalStatus").value;
+        t.dataInicioReal = document.getElementById("modalDataInicioReal").value;
+        t.dataFimReal = document.getElementById("modalDataFimReal").value;
+        t.descricao = document.getElementById("modalDescricao").value;
+        t.anotacoes = document.getElementById("modalAnotacoes").value;
+
+        salvarTarefaNoBanco(t);
+        renderizarTudo();
+      }
+      fecharModal();
+    }
+
+    // --- 6. EVENT LISTENERS E INICIALIZAÇÃO ---
+
+    document.getElementById("searchInput").addEventListener("input", renderizarTudo);
+    document.getElementById("filterInst").addEventListener("change", renderizarTudo);
+    document.getElementById("filterStatus").addEventListener("change", renderizarTudo);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDadosDoBanco();
+    });
+  </script>
 </body>
 </html>
