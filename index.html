@@ -366,399 +366,79 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
     <script>
-        // ==========================================
-        // 1. SUPABASE CONFIGURATION
-        // ==========================================
-        const supabaseUrl = 'https://tfwqanlfvywzhuvnshvx.supabase.co';
-        const supabaseKey = 'sb_publishable_hGTmvG7BS4Ha2sMCOPdgUw_kiTreZ01'; // Nota técnica: Se der erro de autenticação, substitua pela chave "anon public" das configurações do seu projeto Supabase.
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      // ==========================================
+// 1. CONFIGURAÇÃO SHEETDB
+// ==========================================
+const sheetdbUrl = 'https://sheetdb.io/api/v1/b5ogfuqmm9bbb';
+
+// ==========================================
+// Sincronização com o Google Sheets
+// ==========================================
+async function fetchFromSupabase() { // Mantive o nome da função para não quebrar o resto do código
+    showToast("Sincronizando com a planilha...", "success");
+    try {
+        const response = await fetch(sheetdbUrl);
+        const data = await response.json();
         
-        // ==========================================
-        // 2. DATA SOURCE (Abreviado para o exemplo)
-        // ==========================================
-        const rawTasks = [
-            {
-                id: "UJ-ROBOTS", institution: "Unijorge", instCode: "UJ", tag: "Robots.txt", title: "Configurar robots.txt",
-                description: "Criar e publicar robots.txt com directivas de rastreamento/indexação corretas.", sprint: "Sprint 1", weeks: "Sem 1",
-                plannedStartDate: "2026-07-27", plannedEndDate: "2026-07-28", actualStartDate: "2026-07-27", actualEndDate: "2026-07-28",
-                pagesAffected: 1, pagesText: "1 arquivo", isCWV: false, status: "Concluído", notes: ["Directivas verificadas."]
-            },
-            {
-                id: "UJ-PERF-13", institution: "Unijorge", instCode: "UJ", tag: "Rendimento", title: "Reduzir tempo de carga de 13 páginas",
-                description: "Otimizar tempo de carga em 13 páginas priorizadas.", sprint: "Sprint 1-2", weeks: "Sem 1-4",
-                plannedStartDate: "2026-07-29", plannedEndDate: "2026-08-18", actualStartDate: "2026-07-29", actualEndDate: "2026-08-18",
-                pagesAffected: 13, pagesText: "13 páginas", isCWV: false, status: "Concluído", notes: []
-            },
-            {
-                id: "UJ-CWV-LCP", institution: "Unijorge", instCode: "UJ", tag: "CWV-LCP", title: "Otimizar LCP (mobile + desktop)",
-                description: "Melhorar Largest Contentful Paint (>2,5s).", sprint: "Sprint 2-5", weeks: "Sem 4-9",
-                plannedStartDate: "2026-08-21", plannedEndDate: "2026-09-25", actualStartDate: "2026-08-21", actualEndDate: "2026-09-25",
-                pagesAffected: 524, pagesText: "524 páginas", isCWV: true, status: "Em Progresso", notes: []
-            }
-            // OBS: Mantenha aqui a sua lista `rawTasks` completa original. Encurtei neste bloco para focar na lógica.
-        ];
-
-        let tasksState = [];
-        let activeTaskId = null;
-        let customStatuses = [
-            { id: "Pendente", label: "Pendente", color: "#64748b" },
-            { id: "Em Progresso", label: "Em Progresso", color: "#0284c7" },
-            { id: "Em Revisão", label: "Em Revisão", color: "#a855f7" },
-            { id: "Concluído", label: "Concluído", color: "#10b981" },
-            { id: "Impedido", label: "Impedido", color: "#ef4444" }
-        ];
-
-        const timelineStart = new Date("2026-07-20").getTime();
-        const timelineEnd = new Date("2026-12-31").getTime();
-        const totalDuration = timelineEnd - timelineStart;
-
-        // ==========================================
-        // 3. CORE LOGIC & SUPABASE INTEGRATION
-        // ==========================================
-        
-        async function initApp() {
-            // Inicia estados de Status customizados locais (para não complicar com outra tabela agora)
-            const savedStatus = localStorage.getItem('gantt_seo_custom_statuses');
-            if (savedStatus) { try { customStatuses = JSON.parse(savedStatus); } catch(e) {} }
-
-            // Clona o array original 
-            tasksState = JSON.parse(JSON.stringify(rawTasks));
-
-            // Sincroniza e sobrepõe com as edições que estiverem no Supabase
-            await fetchFromSupabase();
-
-            renderGantt();
-            renderTable();
-            updateMetrics();
-            populateModalStatusOptions();
-        }
-
-        async function fetchFromSupabase() {
-            showToast("Sincronizando com a nuvem...", "success");
-            const { data, error } = await supabase.from('tarefas_seo').select('*');
-            
-            if (error) {
-                console.error('Erro ao buscar dados do Supabase:', error);
-                showToast('Erro ao sincronizar com banco de dados', 'error');
-                return;
-            }
-
-            if (data && data.length > 0) {
-                tasksState = tasksState.map(task => {
-                    // Busca na tabela pela coluna `task_id` configurada como texto
-                    const dbTask = data.find(d => d.task_id === task.id); 
-                    if (dbTask) {
-                        return {
-                            ...task,
-                            status: dbTask.status || task.status,
-                            description: dbTask.descricao_custom || task.description,
-                            notes: dbTask.anotacoes ? JSON.parse(dbTask.anotacoes) : task.notes,
-                            actualStartDate: dbTask.data_inicio_real || task.actualStartDate,
-                            actualEndDate: dbTask.data_fim_real || task.actualEndDate
-                        };
-                    }
-                    return task;
-                });
-            }
-        }
-
-        async function syncTaskToSupabase(task) {
-            // Payload respeitando a sua estrutura da tabela imagens (mas trocando id por task_id)
-            const payload = {
-                task_id: task.id, 
-                status: task.status,
-                descricao_custom: task.description,
-                anotacoes: JSON.stringify(task.notes || []),
-                data_inicio_real: task.actualStartDate,
-                data_fim_real: task.actualEndDate
-            };
-
-            const { error } = await supabase
-                .from('tarefas_seo')
-                .upsert(payload, { onConflict: 'task_id' });
-
-            if (error) {
-                console.error("Erro ao salvar no Supabase:", error);
-                showToast("Erro ao salvar na nuvem.", "error");
-            } else {
-                updateMetrics();
-            }
-        }
-
-        async function saveAllTaskDetailsFromModal() {
-            if (!activeTaskId) return;
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (!task) return;
-
-            task.description = document.getElementById('modal-task-desc-input').value.trim() || task.description;
-            task.status = document.getElementById('modal-status-select').value;
-            task.actualStartDate = document.getElementById('modal-actual-start').value || task.actualStartDate;
-            task.actualEndDate = document.getElementById('modal-actual-end').value || task.actualEndDate;
-
-            // Envia apenas esta tarefa atualizada para a nuvem
-            await syncTaskToSupabase(task);
-            
-            renderGantt();
-            renderTable();
-            closeNotesModal();
-            showToast("Alterações salvas na nuvem!");
-        }
-
-        async function saveNoteOnlyFromModal() {
-            if (!activeTaskId) return;
-            const input = document.getElementById('modal-note-input');
-            const noteText = input.value.trim();
-            if (!noteText) return;
-
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (!task.notes) task.notes = [];
-            
-            const timeStamp = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            task.notes.push(`[${timeStamp}] ${noteText}`);
-
-            input.value = '';
-            
-            await syncTaskToSupabase(task); // Salva online
-
-            renderModalNotesList(task);
-            renderGantt();
-            renderTable();
-            showToast("Anotação salva na nuvem!");
-        }
-
-        async function deleteNote(index) {
-            if (!activeTaskId) return;
-            const task = tasksState.find(t => t.id === activeTaskId);
-            if (task && task.notes) {
-                task.notes.splice(index, 1);
-                
-                await syncTaskToSupabase(task); // Atualiza online
-                
-                renderModalNotesList(task);
-                renderGantt();
-                renderTable();
-                showToast("Anotação removida da nuvem.");
-            }
-        }
-
-        async function changeTaskStatus(taskId, newStatus) {
-            const task = tasksState.find(t => t.id === taskId);
-            if (task) {
-                task.status = newStatus;
-                await syncTaskToSupabase(task); // Salva online
-                
-                renderGantt();
-                renderTable();
-                showToast(`Status alterado e sincronizado`);
-            }
-        }
-
-        // ==========================================
-        // 4. UI LOGIC (Gantt, Tabelas e Filtros mantidos)
-        // ==========================================
-        
-        function switchTab(tabName) {
-            ['gantt', 'table', 'doc'].forEach(t => {
-                const btn = document.getElementById(`btn-tab-${t}`);
-                const content = document.getElementById(`tab-${t}-content`);
-                if (t === tabName) {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium bg-cyan-600 text-white shadow transition-all duration-150";
-                    content.classList.remove('hidden');
-                } else {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all duration-150";
-                    content.classList.add('hidden');
+        if (data && data.length > 0) {
+            tasksState = tasksState.map(task => {
+                const dbTask = data.find(d => d.id === task.id); 
+                if (dbTask) {
+                    return {
+                        ...task,
+                        status: dbTask.status || task.status,
+                        description: dbTask.descricao || task.description,
+                        notes: dbTask.anotacoes ? JSON.parse(dbTask.anotacoes) : task.notes,
+                        actualStartDate: dbTask.data_inicio || task.actualStartDate,
+                        actualEndDate: dbTask.data_fim || task.actualEndDate
+                    };
                 }
+                return task;
             });
         }
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        showToast('Erro ao sincronizar com a planilha', 'error');
+    }
+}
 
-        function getPositionPct(dateStr) {
-            if (!dateStr) return 0;
-            const t = new Date(dateStr).getTime();
-            const pct = ((t - timelineStart) / totalDuration) * 100;
-            return Math.max(0, Math.min(100, pct));
+async function syncTaskToSupabase(task) { // Mantive o nome da função
+    const payload = {
+        data: {
+            id: task.id, 
+            status: task.status,
+            descricao: task.description,
+            anotacoes: JSON.stringify(task.notes || []),
+            data_inicio: task.actualStartDate,
+            data_fim: task.actualEndDate
         }
+    };
 
-        function getStatusObj(statusName) {
-            return customStatuses.find(s => s.label === statusName) || { label: statusName, color: "#64748b" };
-        }
-
-        function renderGantt() {
-            const container = document.getElementById('gantt-rows-container');
-            const filtered = getFilteredTasks();
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-slate-500 text-xs">Nenhuma tarefa encontrada.</div>`;
-                return;
-            }
-            container.innerHTML = filtered.map(task => {
-                const isUJ = task.instCode === 'UJ';
-                const instBadgeBg = isUJ ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-                const statusObj = getStatusObj(task.status);
-                const planLeft = getPositionPct(task.plannedStartDate);
-                const planWidth = Math.max(1.2, getPositionPct(task.plannedEndDate) - planLeft);
-                const actStart = task.actualStartDate || task.plannedStartDate;
-                const actEnd = task.actualEndDate || task.plannedEndDate;
-                const actLeft = getPositionPct(actStart);
-                const actWidth = Math.max(1.2, getPositionPct(actEnd) - actLeft);
-                const executionColor = isUJ ? 'bg-gradient-to-r from-sky-500 to-cyan-400' : 'bg-gradient-to-r from-purple-500 to-indigo-400';
-                const notesCount = task.notes ? task.notes.length : 0;
-                return `
-                    <div class="grid grid-cols-12 hover:bg-slate-800/40 transition items-center py-2.5">
-                        <div class="col-span-4 px-3 border-r border-slate-800/80 space-y-1">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${instBadgeBg}">${task.instCode}</span>
-                                <span class="text-xs font-semibold text-slate-200">${task.tag}</span>
-                                <span class="ml-auto px-2 py-0.5 rounded text-[10px] font-medium text-white shadow-sm" style="background-color: ${statusObj.color}">${task.status}</span>
-                            </div>
-                            <div class="text-slate-300 font-medium truncate cursor-pointer hover:text-cyan-400" onclick="openNotesModal('${task.id}')">${task.title}</div>
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="text-emerald-400 font-medium">${task.pagesText}</span>
-                                <button onclick="openNotesModal('${task.id}')" class="text-slate-400 hover:text-cyan-400 flex items-center gap-1"><i class="fa-solid fa-sliders"></i> ${notesCount}</button>
-                            </div>
-                        </div>
-                        <div class="col-span-8 relative h-10 flex flex-col justify-center gap-1 px-2 gantt-grid cursor-pointer" onclick="openNotesModal('${task.id}')">
-                            <div class="absolute top-1 h-3 rounded bg-slate-800 border border-slate-500/70 flex items-center px-1 text-[9px] text-slate-300 z-10" style="left: ${planLeft}%; width: ${planWidth}%;"></div>
-                            <div class="absolute bottom-1 h-3.5 rounded-md ${executionColor} flex items-center px-1.5 text-[9px] text-white font-bold z-20 hover:brightness-125" style="left: ${actLeft}%; width: ${actWidth}%;"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderTable() {
-            const container = document.getElementById('table-rows-container');
-            const filtered = getFilteredTasks();
-            document.getElementById('table-row-count').innerText = `Exibindo ${filtered.length} tarefas`;
-            if (filtered.length === 0) return container.innerHTML = `<tr><td colspan="8">Vazio</td></tr>`;
-            
-            container.innerHTML = filtered.map(task => {
-                const isUJ = task.instCode === 'UJ';
-                const instBadgeBg = isUJ ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : 'bg-purple-500/15 text-purple-400 border-purple-500/30';
-                const statusObj = getStatusObj(task.status);
-                const actStart = task.actualStartDate || task.plannedStartDate;
-                const actEnd = task.actualEndDate || task.plannedEndDate;
-                return `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold border ${instBadgeBg}">${task.instCode}</span></td>
-                        <td class="p-3"><span class="font-bold text-slate-200">${task.tag}</span></td>
-                        <td class="p-3 max-w-xs"><div class="font-semibold text-slate-100">${task.title}</div><div class="text-[11px] text-slate-400 truncate">${task.description}</div></td>
-                        <td class="p-3 font-semibold text-emerald-400">${task.pagesText}</td>
-                        <td class="p-3 text-slate-400 font-mono text-[11px]">${formatDate(task.plannedStartDate)} a ${formatDate(task.plannedEndDate)}</td>
-                        <td class="p-3 text-cyan-300 font-mono text-[11px] font-semibold">${formatDate(actStart)} a ${formatDate(actEnd)}</td>
-                        <td class="p-3">
-                            <select onchange="changeTaskStatus('${task.id}', this.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-white" style="border-left: 3px solid ${statusObj.color}">
-                                ${customStatuses.map(s => `<option value="${s.label}" ${s.label === task.status ? 'selected' : ''}>${s.label}</option>`).join('')}
-                            </select>
-                        </td>
-                        <td class="p-3 text-center">
-                            <button onclick="openNotesModal('${task.id}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs"><i class="fa-solid fa-pen-to-square text-cyan-400"></i></button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function getFilteredTasks() {
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const instFilter = document.getElementById('filter-institution').value;
-            const typeFilter = document.getElementById('filter-type').value;
-            const statusFilter = document.getElementById('filter-status').value;
-
-            return tasksState.filter(task => {
-                if (search && !task.title.toLowerCase().includes(search) && !task.tag.toLowerCase().includes(search)) return false;
-                if (instFilter !== 'ALL' && task.institution !== instFilter) return false;
-                if (typeFilter === 'CWV' && !task.isCWV) return false;
-                if (typeFilter === 'STANDARD' && task.isCWV) return false;
-                if (statusFilter !== 'ALL' && task.status !== statusFilter) return false;
-                return true;
+    try {
+        // Tenta atualizar o registro existente baseado na coluna 'id'
+        const updateUrl = `${sheetdbUrl}/id/${task.id}`;
+        const response = await fetch(updateUrl, {
+            method: 'PUT',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        // Se o registro não existir (updated === 0), cria uma nova linha
+        if (result.updated === 0 || result.error) {
+             await fetch(sheetdbUrl, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
         }
-
-        function applyFilters() { renderGantt(); renderTable(); }
-
-        function updateMetrics() {
-            document.getElementById('stat-total-tasks').innerText = tasksState.length;
-            document.getElementById('stat-total-pages').innerText = tasksState.reduce((acc, t) => acc + (t.pagesAffected || 0), 0).toLocaleString('pt-BR');
-            document.getElementById('stat-cwv-tasks').innerText = tasksState.filter(t => t.isCWV).length;
-        }
-
-        function formatDate(dStr) {
-            if (!dStr) return '';
-            const parts = dStr.split('-');
-            return parts.length !== 3 ? dStr : `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-
-        function openNotesModal(taskId) {
-            activeTaskId = taskId;
-            const task = tasksState.find(t => t.id === taskId);
-            if (!task) return;
-            document.getElementById('modal-task-code-title').innerText = `[${task.tag}] ${task.title}`;
-            document.getElementById('modal-task-desc-input').value = task.description || '';
-            document.getElementById('modal-actual-start').value = task.actualStartDate || task.plannedStartDate;
-            document.getElementById('modal-actual-end').value = task.actualEndDate || task.plannedEndDate;
-            renderModalNotesList(task);
-            populateModalStatusOptions(task.status);
-            document.getElementById('modal-notes').classList.remove('hidden');
-        }
-
-        function closeNotesModal() { document.getElementById('modal-notes').classList.add('hidden'); activeTaskId = null; }
-
-        function renderModalNotesList(task) {
-            const listContainer = document.getElementById('modal-notes-list');
-            document.getElementById('modal-notes-count').innerText = task.notes ? task.notes.length : 0;
-            if (!task.notes || task.notes.length === 0) {
-                return listContainer.innerHTML = `<div class="p-3 text-center text-slate-500 text-xs italic">Vazio.</div>`;
-            }
-            listContainer.innerHTML = task.notes.map((note, index) => `
-                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between gap-2">
-                    <p class="text-slate-200 text-xs leading-relaxed whitespace-pre-wrap flex-1">${note}</p>
-                    <button onclick="deleteNote(${index})" class="text-slate-500 hover:text-rose-400 text-xs p-1"><i class="fa-regular fa-trash-can"></i></button>
-                </div>
-            `).join('');
-        }
-
-        function populateModalStatusOptions(currentStatus) {
-            document.getElementById('modal-status-select').innerHTML = customStatuses.map(s => `<option value="${s.label}" ${s.label === currentStatus ? 'selected' : ''}>${s.label}</option>`).join('');
-        }
-
-        function openCustomStatusModal() { renderCustomStatusList(); document.getElementById('modal-custom-status').classList.remove('hidden'); }
-        function closeCustomStatusModal() { document.getElementById('modal-custom-status').classList.add('hidden'); }
-
-        function renderCustomStatusList() {
-            document.getElementById('custom-status-list').innerHTML = customStatuses.map((s, idx) => `
-                <div class="flex items-center justify-between p-2 bg-slate-950 border border-slate-800 rounded">
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background-color: ${s.color}"></span><span class="text-slate-200">${s.label}</span></div>
-                    ${idx > 4 ? `<button onclick="removeCustomStatus('${s.id}')" class="text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function addNewCustomStatus() {
-            const label = document.getElementById('new-status-label').value.trim();
-            const color = document.getElementById('new-status-color').value;
-            if (!label) return;
-            customStatuses.push({ id: label, label: label, color: color });
-            localStorage.setItem('gantt_seo_custom_statuses', JSON.stringify(customStatuses));
-            renderCustomStatusList(); populateModalStatusOptions();
-            showToast(`Status adicionado!`);
-        }
-
-        function removeCustomStatus(id) {
-            customStatuses = customStatuses.filter(s => s.id !== id);
-            localStorage.setItem('gantt_seo_custom_statuses', JSON.stringify(customStatuses));
-            renderCustomStatusList(); populateModalStatusOptions();
-        }
-
-        function showToast(message, type = "success") {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `px-4 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xl flex items-center gap-2 border ${type === 'success' ? 'bg-cyan-600 border-cyan-500' : 'bg-rose-600 border-rose-500'} transition-all duration-300 transform translate-y-2 opacity-0`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => toast.remove(), 300); }, 3000);
-        }
-
-        window.onload = initApp;
+        updateMetrics();
+    } catch (error) {
+        console.error("Erro ao salvar:", error);
+        showToast("Erro ao salvar na planilha.", "error");
+    }
+}
     </script>
 </body>
 </html>
